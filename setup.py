@@ -45,13 +45,14 @@ def find_version(*file_paths):
 
 
 
-long_description = read("README")
+long_description = read("README.md")
 
 setup(
     name = "gerenuk",
     version = "1.0.0",
     description = "A cloud monitoring tools set",
     long_description = long_description,
+    long_description_content_type='text/markdown',
     url = "https://github.com/cyrilletoulet/gerenuk",
 
     license = 'GPL',
@@ -69,14 +70,6 @@ setup(
 
     package_data = {'': ["*.conf"]},
     packages = find_packages(),
-
-#    entry_points={
-#        "console_scripts": [
-#            "gerenuk-libvirtmon = pip._internal:main",
-#            'foo = my_package.some_module:main_func',
-#            'bar = other_module:some_func',
-#        ],
-#    },
 
     python_requires = '>=2.7,!=3.*',
 )
