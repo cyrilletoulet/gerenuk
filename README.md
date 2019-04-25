@@ -144,3 +144,11 @@ export PYTHONPATH="/path/to/gerenuk/usr/lib/python2/dist-packages"
 export PATH="$PATH:/path/to/gerenuk/usr/bin"
 ```
 
+### Build distribution tarball
+
+To build a distribution tarball:
+```bash
+python setup.py sdist
+```
+
+The distribution version is set in setup.py file.
