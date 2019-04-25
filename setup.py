@@ -45,7 +45,7 @@ def find_version(*file_paths):
 
 
 
-long_description = read("README.md")
+long_description = read("gerenuk/README.md")
 
 setup(
     name = "gerenuk",
@@ -68,7 +68,7 @@ setup(
     author = "Cyrille TOULET",
     author_email = "cyrille.toulet@univ-lille.fr",
 
-    package_data = {'': ["*.conf"]},
+    package_data = {'': ["*.conf", "LICENSE", "README.md"]},
     packages = find_packages(),
 
     python_requires = '>=2.7,!=3.*',
