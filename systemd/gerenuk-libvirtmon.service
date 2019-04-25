@@ -1,0 +1,14 @@
+[Unit]
+Description=Gerenuk Libvirt Monitor service
+After=network.target
+ConditionPathExists=/usr/bin/gerenuk-libvirtmon
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/gerenuk-libvirtmon -c /etc/gerenuk/gerenuk.conf
+ExecReload=/bin/kill -HUP $MAINPID
+PIDFile=/var/run/gerenuk-daemon.pid
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target
