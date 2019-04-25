@@ -13,7 +13,7 @@ yum install python-pip mysql-connector-python
 
 To install gerenuk lib from distribution tarball:
 ```bash
-pip install gerenuk-1.0.0.tar.gz
+pip install gerenuk-x.y.z.tar.gz
 ```
 
 To remove the installed gerenuk lib:
@@ -78,10 +78,30 @@ systemctl start gerenuk-libvirtmon.service
 systemctl enable gerenuk-libvirtmon.service
 ```
 
+
+## Upgrade
+
+To update the python library, stop all the gerenuk services:
+```bash
+systemctl snapshot gerenuk-services
+systemctl stop gerenuk-*
+```
+
+Upgrade gerenuk from new distribution:
+```bash
+pip install dist/gerenuk-x.y.z.tar.gz
+```
+
+And finally restart your services from snapshot:
+```bash
+systemctl isolate gerenuk-services.snapshot
+systemctl delete gerenuk-services.snapshot
+```
+
+
 ## Configuration
 
 By default, gerenuk daemons will look for configuration in /etc/gerenuk/gerenuk.conf.
-
 
 
 ### Configuration reference
@@ -165,6 +185,7 @@ In order to configure a temporary development environment, you can manually spec
 export PYTHONPATH="/path/to/gerenuk/usr/lib/python2/dist-packages"
 export PATH="$PATH:/path/to/gerenuk/usr/bin"
 ```
+
 
 ### Build distribution tarball
 
