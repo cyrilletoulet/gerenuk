@@ -4,7 +4,12 @@ A cloud monitoring tools set
 
 
 ## Installation
-### Prerequires
+### Prerequisites
+
+On all servers, install the required python packages: 
+```bash
+yum install python-pip mysql-connector-python
+```
 
 To install gerenuk lib from distribution tarball:
 ```bash
@@ -52,9 +57,24 @@ Please replace *secret* by a suitable password.
 
 ### Cloud hypervisors
 
-TODO.
+On libvirt hypervisors, install the following additionnal packages:
+```bash
+yum -y install libvirt-python
+```
 
+Install daemon:
+```bash
+cp bin/gerenuk-libvirtmon /usr/bin/
+cp systemd/gerenuk-libvirtmon.service /usr/lib/systemd/system/
+```
 
+Configure database in **/etc/gerenuk/gerenuk.conf** (see config reference for details).
+
+Finally, start the service:
+```bash
+systemctl start gerenuk-libvirtmon.service
+systemctl enable gerenuk-libvirtmon.service
+```
 
 ## Configuration
 
