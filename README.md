@@ -32,7 +32,7 @@ CREATE DATABASE gerenuk;
 CREATE USER 'gerenuk'@'%' IDENTIFIED BY '*secret*';
 GRANT ALL PRIVILEGES ON gerenuk.* TO 'gerenuk'@'%';
 CREATE USER 'gerenuk_dashboard'@'%' IDENTIFIED BY '*secret*';
-GRANT ALL PRIVILEGES ON gerenuk.* TO 'gerenuk_dashboard'@'%';
+GRANT SELECT ON gerenuk.* TO 'gerenuk_dashboard'@'%';
 FLUSH PRIVILEGES;
 
 USE gerenuk;
