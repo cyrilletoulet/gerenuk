@@ -15,44 +15,15 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Thu 25 Apr 11:08:21 CEST 2019
+# Thu 25 Apr 13:20:44 CEST 2019
 
-import codecs
-import os
-import re
 from setuptools import find_packages, setup
 
-
-
-def read(*parts):
-    here = os.path.abspath(os.path.dirname(__file__))
-    with codecs.open(os.path.join(here, *parts), 'r') as fp:
-        return fp.read()
-
-
-
-def find_version(*file_paths):
-    version_file = read(*file_paths)
-    version_match = re.search(
-        r"^__version__ = ['\"]([^'\"]*)['\"]",
-        version_file,
-        re.M,
-    )
-
-    if version_match:
-        return version_match.group(1)
-    raise RuntimeError("Unable to find version string.")
-
-
-
-long_description = read("gerenuk/README.md")
 
 setup(
     name = "gerenuk",
     version = "1.0.0",
     description = "A cloud monitoring tools set",
-    long_description = long_description,
-    long_description_content_type='text/markdown',
     url = "https://github.com/cyrilletoulet/gerenuk",
 
     license = 'GPL',
@@ -68,7 +39,7 @@ setup(
     author = "Cyrille TOULET",
     author_email = "cyrille.toulet@univ-lille.fr",
 
-    package_data = {'': ["*.conf", "LICENSE", "README.md"]},
+    package_data = {'': ["README", "*.conf"]},
     packages = find_packages(),
 
     python_requires = '>=2.7,!=3.*',
