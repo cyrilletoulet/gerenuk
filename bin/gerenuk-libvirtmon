@@ -1,0 +1,99 @@
+#!/usr/bin/python2
+#
+#
+# This file is part of Gerenuk.
+#
+# Gerenuk is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# any later version.
+#
+# Gerenuk is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Gerenuk. If not, see <https://www.gnu.org/licenses/>.
+#
+#
+# Cyrille TOULET <cyrille.toulet@univ-lille.fr>
+# Tue 23 Apr 16:25:28 CEST 2019
+
+import os
+import sys
+import time
+import getopt
+import gerenuk
+import gerenuk.monitoring
+
+
+if __name__ == "__main__":
+    try:
+        # Arguments parsing
+        config = gerenuk.Config()
+
+        opts, args = getopt.getopt(sys.argv[1:], 'hc:', ['help', 'config='])
+        for opt, value in opts:
+            if opt in ('-h', '--help'):
+                #help()
+                sys.exit(1)
+            elif opt in ('-c', '--config'):
+                config.load(value)
+
+
+        # Double-fork daemonization
+        pid_file = config.get("libvirtmon", "pid_file")
+
+        with open(pid_file, 'w') as fd:
+            pass
+
+        pid = os.fork()
+        if pid > 0:
+            sys.exit(0)
+
+        os.chdir("/")
+        os.setsid()
+        os.umask(0)
+
+        pid = os.fork()
+        if pid > 0:
+            with open(pid_file, 'w') as fd:
+                fd.write("%d" % pid)
+                fd.close()
+                sys.exit(0)
+
+        # Daemon
+        libvirt_mon = gerenuk.monitoring.LibvirtMonitor(config)
+
+        while True:
+            start = time.time()
+            libvirt_mon.collect_stats()
+            end = time.time()
+
+            wait = config.getint("libvirtmon", "monitoring_frequency") - end + start
+            time.sleep(wait)
+
+    # Errors
+    except IOError, e:
+        print >>sys.stderr, "Unable to open PID file: %s" % str(e)
+        sys.exit(1)
+
+    except OSError, e:
+        print >>sys.stderr, "Daemonization failed: %s" % str(e)
+        sys.exit(1)
+
+    except gerenuk.ConfigError, e:
+        print >>sys.stderr, "Configuration error: %s" % str(e)
+        sys.exit(1)
+
+    except gerenuk.DependencyError, e:
+        print >>sys.stderr, "Missing dependency: %s" % str(e)
+        sys.exit(1)
+
+    except Exception, e:
+        print >>sys.stderr, "Service failure: %s" % str(e)
+        sys.exit(1)
+
+    finally:
+        sys.exit(0)
