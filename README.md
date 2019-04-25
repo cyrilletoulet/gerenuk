@@ -31,6 +31,8 @@ To create the required database:
 CREATE DATABASE gerenuk;
 CREATE USER 'gerenuk'@'%' IDENTIFIED BY '*secret*';
 GRANT ALL PRIVILEGES ON gerenuk.* TO 'gerenuk'@'%';
+CREATE USER 'gerenuk_dashboard'@'%' IDENTIFIED BY '*secret*';
+GRANT ALL PRIVILEGES ON gerenuk.* TO 'gerenuk_dashboard'@'%';
 FLUSH PRIVILEGES;
 
 USE gerenuk;
@@ -52,7 +54,7 @@ CREATE TABLE IF NOT EXISTS instances_monitoring (
   last_update DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00'
 );
 ```
-Please replace *secret* by a suitable password.
+Please replace *secret* by suitable passwords.
 
 
 ### Cloud hypervisors
