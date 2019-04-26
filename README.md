@@ -84,7 +84,7 @@ systemctl enable gerenuk-libvirtmon.service
 To update the python library, stop all the gerenuk services:
 ```bash
 systemctl snapshot gerenuk-services
-systemctl stop gerenuk-*
+systemctl stop gerenuk-*.service
 ```
 
 Upgrade gerenuk from new distribution:
