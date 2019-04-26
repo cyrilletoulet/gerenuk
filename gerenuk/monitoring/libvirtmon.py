@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Thu 25 Apr 15:31:45 CEST 2019
+# Fri 26 Apr 13:31:47 CEST 2019
 
 import multiprocessing
 import ConfigParser
@@ -194,6 +194,12 @@ class LibvirtMonitor():
                 self.monitoring[uuid]["hourly"]["vcpu"] += [float(n) for n in hourly_vcpu_usage.split(',')]
                 self.monitoring[uuid]["hourly"]["cpu"] += [float(n) for n in hourly_cpu_usage.split(',')]
                 self.monitoring[uuid]["hourly"]["mem"] += [float(n) for n in hourly_mem_usage.split(',')]
+                self.monitoring[uuid]["daily"]["vcpu"] += [float(n) for n in daily_vcpu_usage.split(',')]
+                self.monitoring[uuid]["daily"]["cpu"] += [float(n) for n in daily_cpu_usage.split(',')]
+                self.monitoring[uuid]["daily"]["mem"] += [float(n) for n in daily_mem_usage.split(',')]
+                self.monitoring[uuid]["weekly"]["vcpu"] += [float(n) for n in weekly_vcpu_usage.split(',')]
+                self.monitoring[uuid]["weekly"]["cpu"] += [float(n) for n in weekly_cpu_usage.split(',')]
+                self.monitoring[uuid]["weekly"]["mem"] += [float(n) for n in weekly_mem_usage.split(',')]
 
                 self.loaded_stats.append(uuid)
 
@@ -253,18 +259,22 @@ class LibvirtMonitor():
         """
         Save all collected stats to database.
         """
+        # Tag all existing entries as deleted for hypervisor
+        sql = 'UPDATE instances_monitoring SET deleted="1" WHERE hypervisor="%s";'
+        self.db_cursor.execute(sql % (self.hypervisor["hostname"],))
+
         for uuid in self.monitoring:
             if uuid in self.loaded_stats:
                 # UPDATE
                 now = datetime.datetime.now()
 
-                sql = 'UPDATE instances_monitoring SET deleted="0", last_update="%s", '
+                sql = 'UPDATE instances_monitoring SET deleted="0", last_update="%s", vcores="%d", vram="%d", '
                 sql += 'hourly_vcpu_usage="%s", hourly_cpu_usage="%s", hourly_mem_usage="%s", '
                 sql += 'daily_vcpu_usage="%s", daily_cpu_usage="%s", daily_mem_usage="%s", '
                 sql += 'weekly_vcpu_usage="%s", weekly_cpu_usage="%s", weekly_mem_usage="%s" '
                 sql += 'WHERE uuid="%s";'
 
-                values = (now,)
+                values = (now, self.monitoring[uuid]["info"]["vcores"], self.monitoring[uuid]["info"]["vram"])
                 for period in ["hourly", "daily", "weekly"]:
                     for metric in ["vcpu", "cpu", "mem"]:
                         values += (','.join(str("%.1f" % d) for d in self.monitoring[uuid][period][metric]),)
