@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Thu 25 Apr 15:31:45 CEST 2019
+# Fri 26 Apr 13:31:47 CEST 2019
 
 import multiprocessing
 import ConfigParser
@@ -253,6 +253,10 @@ class LibvirtMonitor():
         """
         Save all collected stats to database.
         """
+        # Tag all existing entries as deleted for hypervisor
+        sql = 'UPDATE instances_monitoring SET deleted="1" WHERE hypervisor="%s";'
+        self.db_cursor.execute(sql % (self.hypervisor["hostname"],))
+
         for uuid in self.monitoring:
             if uuid in self.loaded_stats:
                 # UPDATE

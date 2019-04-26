@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Wed 24 Apr 08:16:35 CEST 2019
+# Fri 26 Apr 13:43:28 CEST 2019
 
 import ConfigParser
 import datetime
@@ -90,6 +90,9 @@ class InstancesMonitorAPI():
                 if uuid in monitoring:
                     continue
 
+                if deleted == 1:
+                    continue
+                
                 info = {"hypervisor": hypervisor, "vcores": vcores, "vmem": vram, "updated": last_update}
                 monitoring[uuid] = {"info": info, "vcpu": tuple(), "cpu": tuple(), "mem": tuple()}
 
