@@ -194,6 +194,12 @@ class LibvirtMonitor():
                 self.monitoring[uuid]["hourly"]["vcpu"] += [float(n) for n in hourly_vcpu_usage.split(',')]
                 self.monitoring[uuid]["hourly"]["cpu"] += [float(n) for n in hourly_cpu_usage.split(',')]
                 self.monitoring[uuid]["hourly"]["mem"] += [float(n) for n in hourly_mem_usage.split(',')]
+                self.monitoring[uuid]["daily"]["vcpu"] += [float(n) for n in daily_vcpu_usage.split(',')]
+                self.monitoring[uuid]["daily"]["cpu"] += [float(n) for n in daily_cpu_usage.split(',')]
+                self.monitoring[uuid]["daily"]["mem"] += [float(n) for n in daily_mem_usage.split(',')]
+                self.monitoring[uuid]["weekly"]["vcpu"] += [float(n) for n in weekly_vcpu_usage.split(',')]
+                self.monitoring[uuid]["weekly"]["cpu"] += [float(n) for n in weekly_cpu_usage.split(',')]
+                self.monitoring[uuid]["weekly"]["mem"] += [float(n) for n in weekly_mem_usage.split(',')]
 
                 self.loaded_stats.append(uuid)
 
