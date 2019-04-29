@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Fri 26 Apr 13:31:47 CEST 2019
+# Mon 29 Apr 08:19:48 CEST 2019
 
 import multiprocessing
 import ConfigParser
@@ -191,15 +191,33 @@ class LibvirtMonitor():
 
                 self.monitoring[uuid]["info"]["vcores"] = int(vcores)
                 self.monitoring[uuid]["info"]["vram"] = int(vram)
-                self.monitoring[uuid]["hourly"]["vcpu"] += [float(n) for n in hourly_vcpu_usage.split(',')]
-                self.monitoring[uuid]["hourly"]["cpu"] += [float(n) for n in hourly_cpu_usage.split(',')]
-                self.monitoring[uuid]["hourly"]["mem"] += [float(n) for n in hourly_mem_usage.split(',')]
-                self.monitoring[uuid]["daily"]["vcpu"] += [float(n) for n in daily_vcpu_usage.split(',')]
-                self.monitoring[uuid]["daily"]["cpu"] += [float(n) for n in daily_cpu_usage.split(',')]
-                self.monitoring[uuid]["daily"]["mem"] += [float(n) for n in daily_mem_usage.split(',')]
-                self.monitoring[uuid]["weekly"]["vcpu"] += [float(n) for n in weekly_vcpu_usage.split(',')]
-                self.monitoring[uuid]["weekly"]["cpu"] += [float(n) for n in weekly_cpu_usage.split(',')]
-                self.monitoring[uuid]["weekly"]["mem"] += [float(n) for n in weekly_mem_usage.split(',')]
+
+                if len(hourly_vcpu_usage) > 0:
+                    self.monitoring[uuid]["hourly"]["vcpu"] += [float(n) for n in hourly_vcpu_usage.split(',')]
+
+                if len(hourly_cpu_usage) > 0:
+                    self.monitoring[uuid]["hourly"]["cpu"] += [float(n) for n in hourly_cpu_usage.split(',')]
+
+                if len(hourly_mem_usage) > 0:
+                    self.monitoring[uuid]["hourly"]["mem"] += [float(n) for n in hourly_mem_usage.split(',')]
+
+                if len(daily_vcpu_usage) > 0:
+                    self.monitoring[uuid]["daily"]["vcpu"] += [float(n) for n in daily_vcpu_usage.split(',')]
+
+                if len(daily_cpu_usage) > 0:
+                    self.monitoring[uuid]["daily"]["cpu"] += [float(n) for n in daily_cpu_usage.split(',')]
+
+                if len(daily_mem_usage) > 0:
+                    self.monitoring[uuid]["daily"]["mem"] += [float(n) for n in daily_mem_usage.split(',')]
+
+                if len(weekly_vcpu_usage) > 0:
+                    self.monitoring[uuid]["weekly"]["vcpu"] += [float(n) for n in weekly_vcpu_usage.split(',')]
+
+                if len(weekly_cpu_usage) > 0:
+                    self.monitoring[uuid]["weekly"]["cpu"] += [float(n) for n in weekly_cpu_usage.split(',')]
+
+                if len(weekly_mem_usage) > 0:
+                    self.monitoring[uuid]["weekly"]["mem"] += [float(n) for n in weekly_mem_usage.split(',')]
 
                 self.loaded_stats.append(uuid)
 
