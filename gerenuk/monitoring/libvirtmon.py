@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Mon 29 Apr 08:19:48 CEST 2019
+# Mon 29 Apr 12:49:55 CEST 2019
 
 import multiprocessing
 import ConfigParser
@@ -127,11 +127,15 @@ class LibvirtMonitor():
             vcores = domain.maxVcpus()
             vram = domain.maxMemory() / 1024
 
-            cpu_stats_1 = domain.getCPUStats(True)
-            mem_stats_1 = domain.memoryStats()
-            time.sleep(self.config.getint("libvirtmon", "sampling_time"))
-            cpu_stats_2 = domain.getCPUStats(True)
-            mem_stats_2 = domain.memoryStats()
+            try:
+                cpu_stats_1 = domain.getCPUStats(True)
+                mem_stats_1 = domain.memoryStats()
+                time.sleep(self.config.getint("libvirtmon", "sampling_time"))
+                cpu_stats_2 = domain.getCPUStats(True)
+                mem_stats_2 = domain.memoryStats()
+            except libvirt.libvirtError:
+                # The instance may be deleted during sleeping time
+                continue
 
             t1 = cpu_stats_1[0]["cpu_time"]
             t2 = cpu_stats_2[0]["cpu_time"]
