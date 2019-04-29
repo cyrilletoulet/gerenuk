@@ -18,13 +18,14 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Tue 23 Apr 16:25:28 CEST 2019
+# Mon 29 Apr 09:34:13 CEST 2019
 
 import os
 import sys
 import time
 import getopt
 import gerenuk
+import traceback
 import gerenuk.monitoring
 
 
@@ -93,6 +94,7 @@ if __name__ == "__main__":
 
     except Exception, e:
         print >>sys.stderr, "Service failure: %s" % str(e)
+        print >>sys.stderr, traceback.format_exc()
         sys.exit(1)
 
     finally:
