@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Mon 29 Apr 12:49:55 CEST 2019
+# Fri 10 May 13:08:49 CEST 2019
 
 import multiprocessing
 import ConfigParser
@@ -133,7 +133,7 @@ class LibvirtMonitor():
                 time.sleep(self.config.getint("libvirtmon", "sampling_time"))
                 cpu_stats_2 = domain.getCPUStats(True)
                 mem_stats_2 = domain.memoryStats()
-            except libvirt.libvirtError:
+            except:
                 # The instance may be deleted during sleeping time
                 continue
 
