@@ -1,6 +1,6 @@
 [Unit]
 Description=Gerenuk Libvirt Monitor service
-After=network.target
+After=network.target libvirtd.service
 ConditionPathExists=/usr/bin/gerenuk-libvirtmon
 
 [Service]
