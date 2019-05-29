@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Fri 26 Apr 13:43:28 CEST 2019
+# Wed 29 May 09:57:29 CEST 2019
 
 import ConfigParser
 import datetime
@@ -141,8 +141,8 @@ class InstancesMonitorAPI():
                 else:
                     weekly_mem_average = -1.
 
-                monitoring[uuid]["vcpu"] = (round(hourly_vcpu_average, 2), round(daily_vcpu_average, 2), round(weekly_vcpu_average, 2))
-                monitoring[uuid]["cpu"] = (round(hourly_cpu_average, 2), round(daily_cpu_average, 2), round(weekly_cpu_average, 2))
-                monitoring[uuid]["mem"] = (round(hourly_mem_average, 2), round(daily_mem_average, 2), round(weekly_mem_average, 2))
+                monitoring[uuid]["vcpu"] = {'hourly': round(hourly_vcpu_average, 2), 'daily': round(daily_vcpu_average, 2), 'weekly': round(weekly_vcpu_average, 2)}
+                monitoring[uuid]["cpu"] = {'hourly': round(hourly_cpu_average, 2), 'daily': round(daily_cpu_average, 2), 'weekly': round(weekly_cpu_average, 2)}
+                monitoring[uuid]["mem"] = {'hourly': round(hourly_mem_average, 2), 'daily': round(daily_mem_average, 2), 'weekly': round(weekly_mem_average, 2)}
 
         return monitoring

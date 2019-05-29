@@ -15,14 +15,14 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Thu 23 May 16:28:09 CEST 2019
+# Wed 29 May 09:58:19 CEST 2019
 
 from setuptools import find_packages, setup
 
 
 setup(
     name = "gerenuk",
-    version = "1.0.9",
+    version = "1.0.10",
     description = "A cloud monitoring tools set",
     url = "https://github.com/cyrilletoulet/gerenuk",
 
