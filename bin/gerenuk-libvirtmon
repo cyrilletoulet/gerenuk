@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Mon 29 Apr 09:34:13 CEST 2019
+# Fri 14 Jun 09:32:21 CEST 2019
 
 import os
 import sys
@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
 
         # Double-fork daemonization
-        pid_file = config.get("libvirtmon", "pid_file")
+        pid_file = config.get("libvirt", "pid_file")
 
         with open(pid_file, 'w') as fd:
             pass
@@ -72,7 +72,7 @@ if __name__ == "__main__":
             libvirt_mon.collect_stats()
             end = time.time()
 
-            wait = config.getint("libvirtmon", "monitoring_frequency") - end + start
+            wait = config.getint("libvirt", "monitoring_frequency") - end + start
             time.sleep(wait)
 
     # Errors

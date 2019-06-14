@@ -53,6 +53,17 @@ CREATE TABLE IF NOT EXISTS instances_monitoring (
   deleted INT(1) NOT NULL DEFAULT 0,
   last_update DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00'
 );
+CREATE TABLE IF NOT EXISTS user_alerts (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  uuid CHAR(37) NOT NULL,
+  project CHAR(37) NOT NULL,
+  domain CHAR(37) NOT NULL,
+  severity TINYINT NOT NULL DEFAULT 0,
+  status TINYINT NOT NULL DEFAULT 1,
+  message_fr VARCHAR(511),
+  message_en VARCHAR(511) NOT NULL,
+  timestamp DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00'
+);
 ```
 Please replace *secret* by suitable passwords.
 
