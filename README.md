@@ -118,7 +118,7 @@ By default, gerenuk daemons will look for configuration in /etc/gerenuk/gerenuk.
 ### Configuration reference
 Instances monitoring specific settings:
 ```
-[DEFAULT]
+[database]
 # The database hostname or IP address.
 db_host = database.mydomain
 
@@ -132,7 +132,7 @@ db_user = gerenuk
 db_pass = *secret*
 
 
-[libvirtmon]
+[libvirt]
 # The file used by libvirt monitoring daemon to save pid.
 # Warning: this file has to be writable and readable by daemon user.
 pid_file = /var/run/gerenuk-daemon.pid
