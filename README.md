@@ -27,45 +27,16 @@ pip uninstall gerenuk
 Gerenuk needs to store collected data in a MySQL-like database.
 
 To create the required database:
-```sql
-CREATE DATABASE gerenuk;
-CREATE USER 'gerenuk'@'%' IDENTIFIED BY '*secret*';
-GRANT ALL PRIVILEGES ON gerenuk.* TO 'gerenuk'@'%';
-CREATE USER 'gerenuk_dashboard'@'%' IDENTIFIED BY '*secret*';
-GRANT SELECT ON gerenuk.* TO 'gerenuk_dashboard'@'%';
-FLUSH PRIVILEGES;
-
-USE gerenuk;
-CREATE TABLE IF NOT EXISTS instances_monitoring (
-  uuid CHAR(37) PRIMARY KEY,
-  hypervisor VARCHAR(127) NOT NULL,
-  vcores SMALLINT UNSIGNED NOT NULL, 
-  vram MEDIUMINT UNSIGNED NOT NULL,
-  hourly_vcpu_usage VARCHAR(255) NOT NULL,
-  daily_vcpu_usage VARCHAR(255) NOT NULL,
-  weekly_vcpu_usage VARCHAR(255) NOT NULL,
-  hourly_cpu_usage VARCHAR(255) NOT NULL,
-  daily_cpu_usage VARCHAR(255) NOT NULL,
-  weekly_cpu_usage VARCHAR(255) NOT NULL,
-  hourly_mem_usage VARCHAR(255) NOT NULL,
-  daily_mem_usage VARCHAR(255) NOT NULL,
-  weekly_mem_usage VARCHAR(255) NOT NULL,
-  deleted INT(1) NOT NULL DEFAULT 0,
-  last_update DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00'
-);
-CREATE TABLE IF NOT EXISTS user_alerts (
-  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  uuid CHAR(37) NOT NULL,
-  project CHAR(37) NOT NULL,
-  domain CHAR(37) NOT NULL,
-  severity TINYINT NOT NULL DEFAULT 0,
-  status TINYINT NOT NULL DEFAULT 1,
-  message_fr VARCHAR(511),
-  message_en VARCHAR(511) NOT NULL,
-  timestamp DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00'
-);
+```bash
+mysql -u root -h $DB_HOST -p -e "CREATE DATABASE gerenuk;"
+mysql -u root -h $DB_HOST -p -e "CREATE USER 'gerenuk'@'%' IDENTIFIED BY '*secret*';"
+mysql -u root -h $DB_HOST -p -e "CREATE USER 'gerenuk_dashboard'@'%' IDENTIFIED BY '*secret*';"
+mysql -u root -h $DB_HOST -p -e "GRANT ALL PRIVILEGES ON gerenuk.* TO 'gerenuk'@'%';"
+mysql -u root -h $DB_HOST -p -e "GRANT SELECT ON gerenuk.* TO 'gerenuk_dashboard'@'%';"
+./bin/gerenuk-db-wizard
 ```
 Please replace *secret* by suitable passwords.
+
 
 
 ### Cloud hypervisors

@@ -1,0 +1,154 @@
+#!/usr/bin/python2
+#
+#
+# This file is part of Gerenuk.
+#
+# Gerenuk is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# any later version.
+#
+# Gerenuk is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Gerenuk. If not, see <https://www.gnu.org/licenses/>.
+#
+#
+# Cyrille TOULET <cyrille.toulet@univ-lille.fr>
+# Tue 18 Jun 12:59:42 CEST 2019
+
+import sys
+import getopt
+import gerenuk
+import traceback
+import mysql.connector
+import gerenuk.monitoring
+
+
+def help():
+    print "Help"
+    print "===="
+    print
+    print "Usage: gerenuk-db-wizard [OPTION]..."
+    print "Run the gerenuk DB wizard to install or update database"
+    print
+    print "Mandatory arguments to long options are mandatory for short options too."
+    print "  -h, --help                   print this help"
+    print "  -c <file>, --config <file>   specify the configuration file"
+    print
+    print "Exit status:"
+    print " 0  if OK,"
+    print " 1  if minor problems (e.g., unknown option),"
+    print " 2  if serious trouble (e.g., backend error)."
+    print
+    print
+    print "License"
+    print "======="
+    print
+    print "Gerenuk is free software: you can redistribute it and/or modify"
+    print "it under the terms of the GNU General Public License as published by"
+    print "the Free Software Foundation, either version 3 of the License, or"
+    print "any later version."
+    print
+    print "Gerenuk is distributed in the hope that it will be useful,"
+    print "but WITHOUT ANY WARRANTY; without even the implied warranty of"
+    print "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the"
+    print "GNU General Public License for more details."
+    print
+    print "You should have received a copy of the GNU General Public License"
+    print "along with Gerenuk. If not, see <https://www.gnu.org/licenses/>."
+
+
+
+if __name__ == "__main__":
+    try:
+        # Arguments parsing
+        config = gerenuk.Config()
+
+        opts, args = getopt.getopt(sys.argv[1:], 'hc:', ['help', 'config='])
+        for opt, value in opts:
+            if opt in ('-h', '--help'):
+                help()
+                sys.exit(1)
+            elif opt in ('-c', '--config'):
+                config.load(value)
+
+        # MySQL database
+        database = mysql.connector.connect(
+            host=config.get("database", "db_host"),
+            user=config.get("database", "db_user"),
+            password=config.get("database", "db_pass"),
+            database=config.get("database", "db_name")
+        )
+        db_cursor = database.cursor()
+
+        # Confirmation
+        confirm = raw_input("Do you really want to run the Gerenuk database wizard? (type yes in uppercase) ")
+        if not(confirm == "YES"):
+            print "Aborted."
+            sys.exit(1)
+
+        print
+        print "Running database wizard:"
+
+        print " - Sync instances_monitoring table..."
+        sql =  "CREATE TABLE IF NOT EXISTS instances_monitoring ("
+        sql += "  uuid CHAR(37) PRIMARY KEY,"
+        sql += "  hypervisor VARCHAR(127) NOT NULL,"
+        sql += "  vcores SMALLINT UNSIGNED NOT NULL, "
+        sql += "  vram MEDIUMINT UNSIGNED NOT NULL,"
+        sql += "  hourly_vcpu_usage VARCHAR(255) NOT NULL,"
+        sql += "  daily_vcpu_usage VARCHAR(255) NOT NULL,"
+        sql += "  weekly_vcpu_usage VARCHAR(255) NOT NULL,"
+        sql += "  hourly_cpu_usage VARCHAR(255) NOT NULL,"
+        sql += "  daily_cpu_usage VARCHAR(255) NOT NULL,"
+        sql += "  weekly_cpu_usage VARCHAR(255) NOT NULL,"
+        sql += "  hourly_mem_usage VARCHAR(255) NOT NULL,"
+        sql += "  daily_mem_usage VARCHAR(255) NOT NULL,"
+        sql += "  weekly_mem_usage VARCHAR(255) NOT NULL,"
+        sql += "  deleted INT(1) NOT NULL DEFAULT 0,"
+        sql += "  last_update DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00'"
+        sql += ");"
+        db_cursor.execute(sql)
+
+        print " - Sync user_alerts table..."
+        sql =  "CREATE TABLE IF NOT EXISTS user_alerts ("
+        sql += "  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,"
+        sql += "  uuid CHAR(37) NOT NULL,"
+        sql += "  project CHAR(37) NOT NULL,"
+        sql += "  domain CHAR(37) NOT NULL,"
+        sql += "  severity TINYINT NOT NULL DEFAULT 0,"
+        sql += "  status TINYINT NOT NULL DEFAULT 1,"
+        sql += "  message_fr VARCHAR(511),"
+        sql += "  message_en VARCHAR(511) NOT NULL,"
+        sql += "  timestamp DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00'"
+        sql += ");"
+        db_cursor.execute(sql)
+
+        print
+        print "Done!"
+        
+        
+    # Errors
+    except gerenuk.ConfigError, e:
+        print >>sys.stderr, "Configuration error: %s" % str(e)
+        sys.exit(1)
+
+    except gerenuk.DependencyError, e:
+        print >>sys.stderr, "Missing dependency: %s" % str(e)
+        sys.exit(1)
+
+    except mysql.connector.Error, e:
+        print >>sys.stderr, "Database error: %s" % str(e)
+        sys.exit(1)
+        
+    except Exception, e:
+        print >>sys.stderr, "Failure: %s" % str(e)
+        print >>sys.stderr, traceback.format_exc()
+        sys.exit(1)
+
+    finally:
+        sys.exit(0)
