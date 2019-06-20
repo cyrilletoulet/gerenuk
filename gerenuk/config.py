@@ -18,12 +18,13 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Wed 17 Apr 10:57:25 CEST 2019
+# Wed 19 Jun 11:20:39 CEST 2019
 
 
 from . import BASE_PATH
 from .exceptions import ConfigError
 import ConfigParser
+import ast
 import sys
 import os
 
@@ -64,7 +65,7 @@ class Config():
         return self.config.get(section, option)
 
 
-    def getint(self, section, option):
+    def get_int(self, section, option):
         """
         Get an integer option value for the named section.
 
@@ -73,3 +74,14 @@ class Config():
         :return: (int) The configuration item if exists
         """
         return self.config.getint(section, option)
+
+    
+    def get_list(self, section, option):
+        """
+        Get an integer option value for the named section.
+
+        :param section: (str) The section to looking in
+        :param option: (str) The option to looking for
+        :return: (int) The configuration item if exists
+        """
+        return ast.literal_eval(self.config.get(section, option))

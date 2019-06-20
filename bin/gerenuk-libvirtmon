@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Fri 14 Jun 09:32:21 CEST 2019
+# Thu 20 Jun 12:22:52 CEST 2019
 
 import os
 import sys
@@ -29,6 +29,41 @@ import traceback
 import gerenuk.monitoring
 
 
+def help():
+    print "Help"
+    print "===="
+    print
+    print "Usage: gerenuk-libvirtmon [OPTION]..."
+    print "Run the gerenuk libvirt monitor"
+    print
+    print "Mandatory arguments to long options are mandatory for short options too."
+    print "  -h, --help                   print this help"
+    print "  -c <file>, --config <file>   specify the configuration file"
+    print
+    print "Exit status:"
+    print " 0  if OK,"
+    print " 1  if minor problems (e.g., unknown option),"
+    print " 2  if serious trouble (e.g., backend error)."
+    print
+    print
+    print "License"
+    print "======="
+    print
+    print "Gerenuk is free software: you can redistribute it and/or modify"
+    print "it under the terms of the GNU General Public License as published by"
+    print "the Free Software Foundation, either version 3 of the License, or"
+    print "any later version."
+    print
+    print "Gerenuk is distributed in the hope that it will be useful,"
+    print "but WITHOUT ANY WARRANTY; without even the implied warranty of"
+    print "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the"
+    print "GNU General Public License for more details."
+    print
+    print "You should have received a copy of the GNU General Public License"
+    print "along with Gerenuk. If not, see <https://www.gnu.org/licenses/>."
+
+
+
 if __name__ == "__main__":
     try:
         # Arguments parsing
@@ -37,7 +72,7 @@ if __name__ == "__main__":
         opts, args = getopt.getopt(sys.argv[1:], 'hc:', ['help', 'config='])
         for opt, value in opts:
             if opt in ('-h', '--help'):
-                #help()
+                help()
                 sys.exit(1)
             elif opt in ('-c', '--config'):
                 config.load(value)
@@ -72,7 +107,7 @@ if __name__ == "__main__":
             libvirt_mon.collect_stats()
             end = time.time()
 
-            wait = config.getint("libvirt", "monitoring_frequency") - end + start
+            wait = config.get_int("libvirt", "monitoring_frequency") - end + start
             time.sleep(wait)
 
     # Errors
