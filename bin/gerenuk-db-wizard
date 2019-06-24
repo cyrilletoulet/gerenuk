@@ -96,7 +96,7 @@ if __name__ == "__main__":
 
         print " - Sync instances_monitoring table..."
         sql =  "CREATE TABLE IF NOT EXISTS instances_monitoring ("
-        sql += "  uuid CHAR(65) PRIMARY KEY,"
+        sql += "  uuid VARCHAR(100) PRIMARY KEY,"
         sql += "  hypervisor VARCHAR(127) NOT NULL,"
         sql += "  vcores SMALLINT UNSIGNED NOT NULL, "
         sql += "  vram MEDIUMINT UNSIGNED NOT NULL,"
@@ -117,7 +117,7 @@ if __name__ == "__main__":
         print " - Sync user_alerts table..."
         sql =  "CREATE TABLE IF NOT EXISTS user_alerts ("
         sql += "  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,"
-        sql += "  uuid CHAR(65),"
+        sql += "  uuid VARCHAR(100),"
         sql += "  project CHAR(37) NOT NULL,"
         sql += "  severity TINYINT NOT NULL DEFAULT 0,"
         sql += "  status TINYINT NOT NULL DEFAULT 1,"
