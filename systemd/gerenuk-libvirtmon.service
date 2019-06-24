@@ -7,7 +7,7 @@ ConditionPathExists=/usr/bin/gerenuk-libvirtmon
 Type=forking
 ExecStart=/usr/bin/gerenuk-libvirtmon -c /etc/gerenuk/gerenuk.conf
 ExecReload=/bin/kill -HUP $MAINPID
-PIDFile=/var/run/gerenuk-daemon.pid
+PIDFile=/var/run/gerenuk-libvirtmon.pid
 KillMode=process
 
 [Install]
