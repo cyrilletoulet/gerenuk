@@ -26,38 +26,37 @@ pip uninstall gerenuk
 
 Gerenuk needs to store collected data in a MySQL-like database.
 
-To create the required database:
-```sql
-CREATE DATABASE gerenuk;
-CREATE USER 'gerenuk'@'%' IDENTIFIED BY '*secret*';
-GRANT ALL PRIVILEGES ON gerenuk.* TO 'gerenuk'@'%';
-CREATE USER 'gerenuk_dashboard'@'%' IDENTIFIED BY '*secret*';
-GRANT SELECT ON gerenuk.* TO 'gerenuk_dashboard'@'%';
-FLUSH PRIVILEGES;
+Configure database in **/etc/gerenuk/gerenuk.conf** (see config reference for details).
 
-USE gerenuk;
-CREATE TABLE IF NOT EXISTS instances_monitoring (
-  uuid CHAR(37) PRIMARY KEY,
-  hypervisor VARCHAR(127) NOT NULL,
-  vcores SMALLINT UNSIGNED NOT NULL, 
-  vram MEDIUMINT UNSIGNED NOT NULL,
-  hourly_vcpu_usage VARCHAR(255) NOT NULL,
-  daily_vcpu_usage VARCHAR(255) NOT NULL,
-  weekly_vcpu_usage VARCHAR(255) NOT NULL,
-  hourly_cpu_usage VARCHAR(255) NOT NULL,
-  daily_cpu_usage VARCHAR(255) NOT NULL,
-  weekly_cpu_usage VARCHAR(255) NOT NULL,
-  hourly_mem_usage VARCHAR(255) NOT NULL,
-  daily_mem_usage VARCHAR(255) NOT NULL,
-  weekly_mem_usage VARCHAR(255) NOT NULL,
-  deleted INT(1) NOT NULL DEFAULT 0,
-  last_update DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00'
-);
+Create the required database:
+```bash
+mysql -u root -h $DB_HOST -p -e "CREATE DATABASE gerenuk;"
+mysql -u root -h $DB_HOST -p -e "CREATE USER 'gerenuk'@'%' IDENTIFIED BY '*secret*';"
+mysql -u root -h $DB_HOST -p -e "CREATE USER 'gerenuk_dashboard'@'%' IDENTIFIED BY '*secret*';"
+mysql -u root -h $DB_HOST -p -e "GRANT ALL PRIVILEGES ON gerenuk.* TO 'gerenuk'@'%';"
+mysql -u root -h $DB_HOST -p -e "GRANT SELECT ON gerenuk.* TO 'gerenuk_dashboard'@'%';"
+./bin/gerenuk-db-wizard
 ```
 Please replace *secret* by suitable passwords.
 
+Install daemon:
+```bash
+cp bin/gerenuk-openstackmon /usr/bin/
+cp systemd/gerenuk-openstackmon.service /usr/lib/systemd/system/
+systemctl daemon-reload
+```
+
+Finally, start the service:
+```bash
+systemctl start gerenuk-openstackmon.service
+systemctl enable gerenuk-openstackmon.service
+```
+
+
 
 ### Cloud hypervisors
+
+Configure database in **/etc/gerenuk/gerenuk.conf** (see config reference for details).
 
 On libvirt hypervisors, install the following additionnal packages:
 ```bash
@@ -68,9 +67,8 @@ Install daemon:
 ```bash
 cp bin/gerenuk-libvirtmon /usr/bin/
 cp systemd/gerenuk-libvirtmon.service /usr/lib/systemd/system/
+systemctl daemon-reload
 ```
-
-Configure database in **/etc/gerenuk/gerenuk.conf** (see config reference for details).
 
 Finally, start the service:
 ```bash
@@ -98,6 +96,11 @@ systemctl isolate gerenuk-services.snapshot
 systemctl delete gerenuk-services.snapshot
 ```
 
+To update the database, run the DB wizard (credentials needs to be configured in **/etc/gerenuk/gerenuk.conf**):
+```bash
+./bin/gerenuk-db-wizard
+```
+
 
 ## Configuration
 
@@ -106,8 +109,8 @@ By default, gerenuk daemons will look for configuration in /etc/gerenuk/gerenuk.
 
 ### Configuration reference
 Instances monitoring specific settings:
-```
-[DEFAULT]
+```ini
+[database]
 # The database hostname or IP address.
 db_host = database.mydomain
 
@@ -121,16 +124,48 @@ db_user = gerenuk
 db_pass = *secret*
 
 
-[libvirtmon]
+[keystone_authtoken]
+# The complete public Identity API endpoint.
+auth_url = https://controller:5000/v3
+
+# The domain name containing project.
+project_domain_name = default
+
+# The domain name containing user.
+user_domain_name = default
+
+# The project domain name to scope to.
+project_name = admin
+
+# The username.
+username = gerenuk
+
+# The user's password.
+password = *secret*
+
+
+[libvirt]
 # The file used by libvirt monitoring daemon to save pid.
 # Warning: this file has to be writable and readable by daemon user.
-pid_file = /var/run/gerenuk-daemon.pid
+pid_file = /var/run/gerenuk-libvirtmon.pid
 
-# The instances monitoring grequency (in seconds).
+# The instances monitoring frequency (in seconds).
 monitoring_frequency = 300
 
 # The monitoring sampling duration (in seconds).
 sampling_time = 3
+
+
+[openstack]
+# The file used by libvirt monitoring daemon to save pid.
+# Warning: this file has to be writable and readable by daemon user.
+pid_file = /var/run/gerenuk-openstackmon.pid
+
+# The project config directory
+projects_dir = /etc/gerenuk/project.d/
+
+# The openstack monitoring frequency (in seconds).
+monitoring_frequency = 3600
 ```
 
 
@@ -177,6 +212,92 @@ if __name__ == "__main__":
     finally:
         sys.exit(0)
 ```
+
+Alerts API sample:
+```python
+#!/usr/bin/python2
+# -*- coding: utf-8 -*-
+
+import sys
+import getopt
+import gerenuk
+import datetime
+import gerenuk.api
+
+SEVERITY = ["INFO", "ALERT", "WARNING", "CRITICAL"]
+
+if __name__ == "__main__":
+    try:
+        config = gerenuk.Config()
+
+        opts, args = getopt.getopt(sys.argv[1:], 'c:', ['config='])
+        for opt, value in opts:
+            if opt in ('-c', '--config'):
+                config.load(value)
+
+        api = gerenuk.api.AlertsAPI(config)
+
+        # Get read alerts
+        project = "75a5d7351c6c4a40ad9fc3ab0a50f4d0"
+        read_alerts = api.get_read_alerts(project)
+        
+        for alert in read_alerts:
+            dest = alert["uuid"]
+            if not(alert["uuid"]):
+                dest = "all members of project"
+            
+            print "Alert #" + str(alert["id"]) + " in project " + project
+            print " - Severity: " + SEVERITY[alert["severity"]]
+            print " - User: " + dest
+            print " - Timestamp: " + str(alert["timestamp"])
+            print " - Message (en): " + alert["message_en"]
+            print " - Message (fr): " + alert["message_fr"]
+            print
+
+        # Get unread alerts
+        unread_alerts = api.get_unread_alerts(project)
+        read_ids = list()
+
+        for i in range(0, min(2, len(unread_alerts))):
+            read_ids.append(unread_alerts[i]["id"])
+
+        # Tags the two first alerts as read
+        print "Alerts to tag as read: " + ", ".join([str(id) for id in read_ids])
+        api.tag_alerts_as_read(read_ids)
+        print
+
+        # Get read alerts once again
+        read_alerts = api.get_read_alerts(project)
+        
+        for alert in read_alerts:
+            dest = alert["uuid"]
+            if not(alert["uuid"]):
+                dest = "all members of project"
+            
+            print "Alert #" + str(alert["id"]) + " in project " + project
+            print " - Severity: " + SEVERITY[alert["severity"]]
+            print " - User: " + dest
+            print " - Timestamp: " + str(alert["timestamp"])
+            print " - Message (en): " + alert["message_en"]
+            print " - Message (fr): " + alert["message_fr"]
+            print
+
+    except gerenuk.ConfigError, e:
+        print >>sys.stderr, "Configuration error: %s" % str(e)
+        sys.exit(1)
+
+    except gerenuk.DependencyError, e:
+        print >>sys.stderr, "Missing dependency: %s" % str(e)
+        sys.exit(1)
+
+    except Exception, e:
+        print >>sys.stderr, "Service failure: %s" % str(e)
+        sys.exit(1)
+
+    finally:
+        sys.exit(0)
+```
+
 
 
 ### Environment

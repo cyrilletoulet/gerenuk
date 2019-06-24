@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Thu 23 May 16:12:02 CEST 2019
+# Wed 19 Jun 11:22:03 CEST 2019
 
 import multiprocessing
 import ConfigParser
@@ -41,6 +41,7 @@ class LibvirtMonitor():
         """
         Initialize the LibvirtMonitor object
 
+        :param config: (gerenuk.Config) The configuration object
         :raise: (gerenuk.DependencyError) When a required dependency is missing
         :raise: (gerenuk.MonitoringError) When an internal error occurs
         """
@@ -56,7 +57,7 @@ class LibvirtMonitor():
 
         # Constants
         self.NB_VALUES = {
-            "hourly": 3600 / self.config.getint("libvirtmon", "monitoring_frequency"),
+            "hourly": 3600 / self.config.get_int("libvirt", "monitoring_frequency"),
             "daily": 24,
             "weekly": 7
         }
@@ -68,10 +69,10 @@ class LibvirtMonitor():
 
         # MySQL
         self.database = mysql.connector.connect(
-            host=self.config.get("DEFAULT", "db_host"),
-            user=self.config.get("DEFAULT", "db_user"),
-            password=self.config.get("DEFAULT", "db_pass"),
-            database=self.config.get("DEFAULT", "db_name")
+            host=self.config.get("database", "db_host"),
+            user=self.config.get("database", "db_user"),
+            password=self.config.get("database", "db_pass"),
+            database=self.config.get("database", "db_name")
         )
         self.db_cursor = self.database.cursor()
 
@@ -122,7 +123,7 @@ class LibvirtMonitor():
         Colelct all libvirt domains stats.
         """
         domain_ids = self.connection.listDomainsID()
-        sampling_time = self.config.getint("libvirtmon", "sampling_time")
+        sampling_time = self.config.get_int("libvirt", "sampling_time")
 
         for domain_id in domain_ids:
             try:
@@ -260,7 +261,7 @@ class LibvirtMonitor():
         self.monitoring[uuid]["hourly"]["mem"].append(stats["mem_usage"])
 
         # Daily
-        if now.minute <= (self.config.getint("libvirtmon", "monitoring_frequency") / 60):
+        if now.minute <= (self.config.get_int("libvirt", "monitoring_frequency") / 60):
             hourly_vcpu_average = sum(float(i) for i in self.monitoring[uuid]["hourly"]["vcpu"]) / float(len(self.monitoring[uuid]["hourly"]["vcpu"]))
             hourly_cpu_average = sum(float(i) for i in self.monitoring[uuid]["hourly"]["cpu"]) / float(len(self.monitoring[uuid]["hourly"]["cpu"]))
             hourly_mem_average = sum(float(i) for i in self.monitoring[uuid]["hourly"]["mem"]) / float(len(self.monitoring[uuid]["hourly"]["mem"]))
@@ -270,7 +271,7 @@ class LibvirtMonitor():
             self.monitoring[uuid]["daily"]["mem"].append(hourly_mem_average)
 
         # Weekly
-        if now.minute <= (self.config.getint("libvirtmon", "monitoring_frequency") / 60) and now.hour == 0:
+        if now.minute <= (self.config.get_int("libvirt", "monitoring_frequency") / 60) and now.hour == 0:
             daily_vcpu_average = sum(float(i) for i in self.monitoring[uuid]["daily"]["vcpu"]) / float(len(self.monitoring[uuid]["daily"]["vcpu"]))
             daily_cpu_average = sum(float(i) for i in self.monitoring[uuid]["daily"]["cpu"]) / float(len(self.monitoring[uuid]["daily"]["cpu"]))
             daily_mem_average = sum(float(i) for i in self.monitoring[uuid]["daily"]["mem"]) / float(len(self.monitoring[uuid]["daily"]["mem"]))

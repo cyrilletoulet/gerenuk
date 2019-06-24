@@ -49,10 +49,10 @@ class InstancesMonitorAPI():
 
         # MySQL
         self.database = mysql.connector.connect(
-            host=self.config.get("DEFAULT", "db_host"),
-            user=self.config.get("DEFAULT", "db_user"),
-            password=self.config.get("DEFAULT", "db_pass"),
-            database=self.config.get("DEFAULT", "db_name")
+            host=self.config.get("database", "db_host"),
+            user=self.config.get("database", "db_user"),
+            password=self.config.get("database", "db_pass"),
+            database=self.config.get("database", "db_name")
         )
         self.db_cursor = self.database.cursor()
 

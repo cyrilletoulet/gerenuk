@@ -1,0 +1,14 @@
+[Unit]
+Description=Gerenuk OpenStack Monitor service
+After=network.target
+ConditionPathExists=/usr/bin/gerenuk-openstackmon
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/gerenuk-openstackmon -c /etc/gerenuk/gerenuk.conf
+ExecReload=/bin/kill -HUP $MAINPID
+PIDFile=/var/run/gerenuk-openstackmon.pid
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target

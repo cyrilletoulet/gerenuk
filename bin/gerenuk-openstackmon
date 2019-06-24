@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Thu 20 Jun 12:22:52 CEST 2019
+# Mon 24 Jun 09:21:31 CEST 2019
 
 import os
 import sys
@@ -33,8 +33,8 @@ def help():
     print "Help"
     print "===="
     print
-    print "Usage: gerenuk-libvirtmon [OPTION]..."
-    print "Run the gerenuk libvirt monitor"
+    print "Usage: gerenuk-openstackmon [OPTION]..."
+    print "Run the gerenuk openstack monitor"
     print
     print "Mandatory arguments to long options are mandatory for short options too."
     print "  -h, --help                   print this help"
@@ -79,7 +79,7 @@ if __name__ == "__main__":
 
 
         # Double-fork daemonization
-        pid_file = config.get("libvirt", "pid_file")
+        pid_file = config.get("openstack", "pid_file")
 
         with open(pid_file, 'w') as fd:
             pass
@@ -100,14 +100,16 @@ if __name__ == "__main__":
                 sys.exit(0)
 
         # Daemon
-        libvirt_mon = gerenuk.monitoring.LibvirtMonitor(config)
+        openstack_mon = gerenuk.monitoring.OpenstackMonitor(config)
 
         while True:
             start = time.time()
-            libvirt_mon.collect_stats()
+            print "Start ..."
+            openstack_mon.monitor_projects()
+            print "... Stop\n"
             end = time.time()
 
-            wait = config.get_int("libvirt", "monitoring_frequency") - end + start
+            wait = config.get_int("openstack", "monitoring_frequency") - end + start
             time.sleep(wait)
 
     # Errors
@@ -125,6 +127,10 @@ if __name__ == "__main__":
 
     except gerenuk.DependencyError, e:
         print >>sys.stderr, "Missing dependency: %s" % str(e)
+        sys.exit(1)
+
+    except gerenuk.MonitoringError, e:
+        print >>sys.stderr, "Monitoring error: %s" % str(e)
         sys.exit(1)
 
     except Exception, e:

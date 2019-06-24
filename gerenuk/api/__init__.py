@@ -18,6 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Wed 24 Apr 08:14:29 CEST 2019
+# Thu 20 Jun 15:14:50 CEST 2019
 
 from .instancesmonapi import InstancesMonitorAPI
+from .alertsapi import AlertsAPI
