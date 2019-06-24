@@ -165,7 +165,7 @@ monitoring_frequency = 3600
 ### OpenStack project configuration reference
 
 To monitor an OpenStack project, create a specific configuration file in /etc/gerenuk/project.d.
-For more consistency, you can name your configuration files following the convention ''domain.project.conf''.
+For more consistency, you can name your configuration files following the convention *domain.project.conf*.
 
 The project specific configuration reference:
 ```ini
