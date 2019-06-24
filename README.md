@@ -21,6 +21,13 @@ To remove the installed gerenuk lib:
 pip uninstall gerenuk
 ```
 
+Create the config directory:
+```bash
+mkdir /etc/gerenuk
+mkdir /etc/gerenuk/project.d
+chmod -R 700 /etc/gerenuk
+```
+
 
 ### Cloud controller
 
@@ -35,7 +42,7 @@ mysql -u root -h $DB_HOST -p -e "CREATE USER 'gerenuk'@'%' IDENTIFIED BY '*secre
 mysql -u root -h $DB_HOST -p -e "CREATE USER 'gerenuk_dashboard'@'%' IDENTIFIED BY '*secret*';"
 mysql -u root -h $DB_HOST -p -e "GRANT ALL PRIVILEGES ON gerenuk.* TO 'gerenuk'@'%';"
 mysql -u root -h $DB_HOST -p -e "GRANT SELECT ON gerenuk.* TO 'gerenuk_dashboard'@'%';"
-./bin/gerenuk-db-wizard
+./bin/gerenuk-db-wizard -c /etc/gerenuk/gerenuk.conf
 ```
 Please replace *secret* by suitable passwords.
 
@@ -98,7 +105,7 @@ systemctl delete gerenuk-services.snapshot
 
 To update the database, run the DB wizard (credentials needs to be configured in **/etc/gerenuk/gerenuk.conf**):
 ```bash
-./bin/gerenuk-db-wizard
+./bin/gerenuk-db-wizard -c /etc/gerenuk/gerenuk.conf
 ```
 
 
@@ -106,9 +113,15 @@ To update the database, run the DB wizard (credentials needs to be configured in
 
 By default, gerenuk daemons will look for configuration in /etc/gerenuk/gerenuk.conf.
 
+Don't forget to restrict rights of each configuration file:
+```bash
+chmod -R 600 /etc/gerenuk/gerenuk.conf
+chmod -R 600 /etc/gerenuk/project.d/*
+```
 
-### Configuration reference
-Instances monitoring specific settings:
+
+### Main configuration reference
+The main configuration reference:
 ```ini
 [database]
 # The database hostname or IP address.
@@ -122,26 +135,6 @@ db_user = gerenuk
 
 # The password corresponding to database user.
 db_pass = *secret*
-
-
-[keystone_authtoken]
-# The complete public Identity API endpoint.
-auth_url = https://controller:5000/v3
-
-# The domain name containing project.
-project_domain_name = default
-
-# The domain name containing user.
-user_domain_name = default
-
-# The project domain name to scope to.
-project_name = admin
-
-# The username.
-username = gerenuk
-
-# The user's password.
-password = *secret*
 
 
 [libvirt]
@@ -167,6 +160,72 @@ projects_dir = /etc/gerenuk/project.d/
 # The openstack monitoring frequency (in seconds).
 monitoring_frequency = 3600
 ```
+
+
+### OpenStack project configuration reference
+
+To monitor an OpenStack project, create a specific configuration file in /etc/gerenuk/project.d.
+For more consistency, you can name your configuration files following the convention *domain.project.conf*.
+
+The project specific configuration reference:
+```ini
+[keystone_authtoken]
+# The complete public Identity API endpoint.
+auth_url = https://controller:5000/v3
+
+# The domain name containing project.
+project_domain_name = default
+
+# The domain name containing user.
+user_domain_name = default
+
+# The project domain name to scope to.
+project_name = admin
+
+# The username.
+username = gerenuk
+
+# The user's password.
+password = *secret*
+
+
+[networks]
+# The trusted public subnets.
+# For exemple ["194.214.0.0/16", "134.206.0.0/16"]
+trusted_subnets = []
+
+# The trusted TCP ports.
+tcp_whitelist = []
+
+# The trusted UDP ports.
+udp_whitelist = []
+
+
+[instances]
+# Time (in days) before a stopped instance is in alert.
+stopped_alert_delay = 1
+
+# Time (in days) before a running instance is in alert.
+running_alert_delay = 7
+
+# The instances whitelist.
+# For example ["7caab7bc-310a-4abf-bdba-222f3adcd35b", "..."]
+whitelist = []
+
+
+[volumes]
+# Time (in days) before an orphan volume is in alert.
+orphan_alert_delay = 1
+
+# Time (in days) before an inactive volume is in alert.
+inactive_alert_delay = 7
+
+# The volumes whitelist.
+whitelist = []
+# For example ["bbd77d18-2ca9-4dbf-b9f5-01b8675dd983", "..."]
+```
+
+
 
 
 ## Development
