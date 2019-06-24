@@ -104,9 +104,7 @@ if __name__ == "__main__":
 
         while True:
             start = time.time()
-            print "Start ..."
             openstack_mon.monitor_projects()
-            print "... Stop\n"
             end = time.time()
 
             wait = config.get_int("openstack", "monitoring_frequency") - end + start

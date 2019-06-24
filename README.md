@@ -25,6 +25,7 @@ Create the config directory:
 ```bash
 mkdir /etc/gerenuk
 mkdir /etc/gerenuk/project.d
+chmod -R 700 /etc/gerenuk
 ```
 
 
@@ -112,6 +113,13 @@ To update the database, run the DB wizard (credentials needs to be configured in
 
 By default, gerenuk daemons will look for configuration in /etc/gerenuk/gerenuk.conf.
 
+Don't forget to restrict rights of each configuration file:
+```bash
+chmod -R 600 /etc/gerenuk/gerenuk.conf
+chmod -R 600 /etc/gerenuk/project.d/*
+```
+
+
 ### Main configuration reference
 The main configuration reference:
 ```ini
@@ -127,26 +135,6 @@ db_user = gerenuk
 
 # The password corresponding to database user.
 db_pass = *secret*
-
-
-[keystone_authtoken]
-# The complete public Identity API endpoint.
-auth_url = https://controller:5000/v3
-
-# The domain name containing project.
-project_domain_name = default
-
-# The domain name containing user.
-user_domain_name = default
-
-# The project domain name to scope to.
-project_name = admin
-
-# The username.
-username = gerenuk
-
-# The user's password.
-password = *secret*
 
 
 [libvirt]
