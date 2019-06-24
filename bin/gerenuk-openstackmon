@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Thu 20 Jun 12:24:33 CEST 2019
+# Mon 24 Jun 09:21:31 CEST 2019
 
 import os
 import sys
@@ -101,7 +101,16 @@ if __name__ == "__main__":
 
         # Daemon
         openstack_mon = gerenuk.monitoring.OpenstackMonitor(config)
-        openstack_mon.projects_lookup()
+
+        while True:
+            start = time.time()
+            print "Start ..."
+            openstack_mon.monitor_projects()
+            print "... Stop\n"
+            end = time.time()
+
+            wait = config.get_int("openstack", "monitoring_frequency") - end + start
+            time.sleep(wait)
 
     # Errors
     except IOError, e:

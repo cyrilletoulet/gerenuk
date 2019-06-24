@@ -128,7 +128,7 @@ password = *secret*
 # Warning: this file has to be writable and readable by daemon user.
 pid_file = /var/run/gerenuk-libvirtmon.pid
 
-# The instances monitoring grequency (in seconds).
+# The instances monitoring frequency (in seconds).
 monitoring_frequency = 300
 
 # The monitoring sampling duration (in seconds).
@@ -142,6 +142,9 @@ pid_file = /var/run/gerenuk-openstackmon.pid
 
 # The project config directory
 projects_dir = /etc/gerenuk/project.d/
+
+# The openstack monitoring frequency (in seconds).
+monitoring_frequency = 3600
 ```
 
 

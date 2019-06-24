@@ -19,7 +19,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Thu 20 Jun 11:23:53 CEST 2019
+# Mon 24 Jun 09:21:53 CEST 2019
 
 NOVA_API_VERSION = 2
 CINDER_API_VERSION = 3
@@ -89,7 +89,7 @@ class OpenstackMonitor():
 
 
     
-    def projects_lookup(self):
+    def monitor_projects(self):
         """
         Browse all monitored projects from config files.
         """
