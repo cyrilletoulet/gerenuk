@@ -213,7 +213,7 @@ if __name__ == "__main__":
         sys.exit(0)
 ```
 
-Alerts API:
+Alerts API sample:
 ```python
 #!/usr/bin/python2
 # -*- coding: utf-8 -*-
