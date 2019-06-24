@@ -26,7 +26,9 @@ pip uninstall gerenuk
 
 Gerenuk needs to store collected data in a MySQL-like database.
 
-To create the required database:
+Configure database in **/etc/gerenuk/gerenuk.conf** (see config reference for details).
+
+Create the required database:
 ```bash
 mysql -u root -h $DB_HOST -p -e "CREATE DATABASE gerenuk;"
 mysql -u root -h $DB_HOST -p -e "CREATE USER 'gerenuk'@'%' IDENTIFIED BY '*secret*';"
@@ -37,9 +39,24 @@ mysql -u root -h $DB_HOST -p -e "GRANT SELECT ON gerenuk.* TO 'gerenuk_dashboard
 ```
 Please replace *secret* by suitable passwords.
 
+Install daemon:
+```bash
+cp bin/gerenuk-openstackmon /usr/bin/
+cp systemd/gerenuk-openstackmon.service /usr/lib/systemd/system/
+systemctl daemon-reload
+```
+
+Finally, start the service:
+```bash
+systemctl start gerenuk-openstackmon.service
+systemctl enable gerenuk-openstackmon.service
+```
+
 
 
 ### Cloud hypervisors
+
+Configure database in **/etc/gerenuk/gerenuk.conf** (see config reference for details).
 
 On libvirt hypervisors, install the following additionnal packages:
 ```bash
@@ -50,9 +67,8 @@ Install daemon:
 ```bash
 cp bin/gerenuk-libvirtmon /usr/bin/
 cp systemd/gerenuk-libvirtmon.service /usr/lib/systemd/system/
+systemctl daemon-reload
 ```
-
-Configure database in **/etc/gerenuk/gerenuk.conf** (see config reference for details).
 
 Finally, start the service:
 ```bash
@@ -80,6 +96,11 @@ systemctl isolate gerenuk-services.snapshot
 systemctl delete gerenuk-services.snapshot
 ```
 
+To update the database, run the DB wizard (credentials needs to be configured in **/etc/gerenuk/gerenuk.conf**):
+```bash
+./bin/gerenuk-db-wizard
+```
+
 
 ## Configuration
 
@@ -88,7 +109,7 @@ By default, gerenuk daemons will look for configuration in /etc/gerenuk/gerenuk.
 
 ### Configuration reference
 Instances monitoring specific settings:
-```
+```ini
 [database]
 # The database hostname or IP address.
 db_host = database.mydomain
