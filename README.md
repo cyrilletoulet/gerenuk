@@ -41,7 +41,7 @@ mysql -u root -h $DB_HOST -p -e "CREATE DATABASE gerenuk;"
 mysql -u root -h $DB_HOST -p -e "CREATE USER 'gerenuk'@'%' IDENTIFIED BY '*secret*';"
 mysql -u root -h $DB_HOST -p -e "CREATE USER 'gerenuk_dashboard'@'%' IDENTIFIED BY '*secret*';"
 mysql -u root -h $DB_HOST -p -e "GRANT ALL PRIVILEGES ON gerenuk.* TO 'gerenuk'@'%';"
-mysql -u root -h $DB_HOST -p -e "GRANT SELECT ON gerenuk.* TO 'gerenuk_dashboard'@'%';"
+mysql -u root -h $DB_HOST -p -e "GRANT SELECT, UPDATE ON gerenuk.* TO 'gerenuk_dashboard'@'%';"
 ./bin/gerenuk-db-wizard -c /etc/gerenuk/gerenuk.conf
 ```
 Please replace *secret* by suitable passwords.
