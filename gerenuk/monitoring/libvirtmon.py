@@ -166,37 +166,37 @@ class LibvirtMonitor():
         sampling_time = self.config.get_int("libvirt", "sampling_time")
 
         for domain_id in domain_ids:
-            domain = self.connection.lookupByID(domain_id)
-
-            vcores = domain.maxVcpus()
-            vram = domain.maxMemory() / 1024
-
             try:
+                domain = self.connection.lookupByID(domain_id)
+
+                vcores = domain.maxVcpus()
+                vram = domain.maxMemory() / 1024
+
                 cpu_stats_1 = domain.getCPUStats(True)
                 mem_stats_1 = domain.memoryStats()
                 time.sleep(sampling_time)
                 cpu_stats_2 = domain.getCPUStats(True)
                 mem_stats_2 = domain.memoryStats()
+
+                t1 = cpu_stats_1[0]["cpu_time"]
+                t2 = cpu_stats_2[0]["cpu_time"]
+
+                cpu_usage = (t2 - t1) / vcores / 10.**9 / sampling_time
+                real_cpu_usage = (t2 - t1) / self.hypervisor["cores"] / 10.**9 / sampling_time
+                mem_stats_average = (mem_stats_1["actual"] + mem_stats_2["actual"]) / 2.
+                mem_usage = (mem_stats_average / 1024 / self.hypervisor["estimated_memory"])
+
+                stats = dict()
+                stats["uuid"] = domain.UUIDString()
+                stats["vcores"] = vcores
+                stats["vram"] = vram
+                stats["vcpu_usage"] = round(cpu_usage * 100., 2)
+                stats["cpu_usage"] = round(real_cpu_usage * 100., 2)
+                stats["mem_usage"] = round(mem_usage * 100., 2)
             except:
                 # The instance may be deleted during sleeping time
                 # If so, go to the next libvirt domain
                 continue
-
-            t1 = cpu_stats_1[0]["cpu_time"]
-            t2 = cpu_stats_2[0]["cpu_time"]
-
-            cpu_usage = (t2 - t1) / vcores / 10.**9 / sampling_time
-            real_cpu_usage = (t2 - t1) / self.hypervisor["cores"] / 10.**9 / sampling_time
-            mem_stats_average = (mem_stats_1["actual"] + mem_stats_2["actual"]) / 2.
-            mem_usage = (mem_stats_average / 1024 / self.hypervisor["estimated_memory"])
-
-            stats = dict()
-            stats["uuid"] = domain.UUIDString()
-            stats["vcores"] = vcores
-            stats["vram"] = vram
-            stats["vcpu_usage"] = round(cpu_usage * 100., 2)
-            stats["cpu_usage"] = round(real_cpu_usage * 100., 2)
-            stats["mem_usage"] = round(mem_usage * 100., 2)
 
             self.store_stats(stats)
 
