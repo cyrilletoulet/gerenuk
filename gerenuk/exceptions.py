@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Thu  4 Apr 14:16:42 CEST 2019
+# Tue 15 Oct 10:45:56 CEST 2019
 
 
 class ConfigError(Exception):
@@ -55,3 +55,14 @@ class MonitoringError(SystemError):
         Initialize the exception.
         """
         super(MonitoringError, self).__init__(message)
+
+class ConnectivityError(EnvironmentError):
+    """
+    This exception is raised when a connectivity error occurs.
+    """
+
+    def __init__(self, message):
+        """
+        Initialize the exception.
+        """
+        super(ConnectivityError, self).__init__(message)
