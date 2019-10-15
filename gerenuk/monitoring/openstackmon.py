@@ -33,6 +33,8 @@ SEVERITY_CRITICAL = 3
 from netaddr import *
 import datetime
 import gerenuk
+import time
+import sys
 import os
 
 
@@ -58,14 +60,7 @@ class OpenstackMonitor():
         self.config = config
 
         # MySQL
-        self.database = mysql.connector.connect(
-            host=self.config.get("database", "db_host"),
-            user=self.config.get("database", "db_user"),
-            password=self.config.get("database", "db_pass"),
-            database=self.config.get("database", "db_name"),
-            connection_timeout=self.config.get_int("database", "db_timeout")
-        )
-        self.db_cursor = self.database.cursor()
+        self.db_connect()
 
 
 
@@ -90,6 +85,28 @@ class OpenstackMonitor():
 
 
     
+    def db_connect(self):
+        """
+        Try to connect to the database
+        :raise: (gerenuk.DependencyError) When a required dependency is missing
+        """
+        # Dependencies
+        try:
+            import mysql.connector
+        except Exception, e:
+            raise gerenuk.DependencyError(e)
+
+        self.database = mysql.connector.connect(
+            host=self.config.get("database", "db_host"),
+            user=self.config.get("database", "db_user"),
+            password=self.config.get("database", "db_pass"),
+            database=self.config.get("database", "db_name"),
+            connection_timeout=self.config.get_int("database", "db_timeout")
+        )
+        self.db_cursor = self.database.cursor()
+
+    
+
     def monitor_projects(self):
         """
         Browse all monitored projects from config files.
