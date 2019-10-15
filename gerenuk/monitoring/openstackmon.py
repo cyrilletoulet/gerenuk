@@ -194,7 +194,7 @@ class OpenstackMonitor():
                         message_fr = "Instance " + instance.id
                         if instance.name:
                             message_fr += " (" + instance.name + ")"
-                        message_fr += u" creéée le " + created_at.strftime("%d/%m/%Y") + " (il y a " + str(created_delta) + " jour" + created_delta_s + u") éteinte ("
+                        message_fr += u" créée le " + created_at.strftime("%d/%m/%Y") + " (il y a " + str(created_delta) + " jour" + created_delta_s + u") éteinte ("
                         message_fr += instance.status.upper() + ") depuis " + str(updated_delta) + " jour" + updated_delta_s + '.'
                         
                         sql = 'SELECT COUNT(id) AS nb FROM user_alerts WHERE status=1 AND message_en="%s";'
@@ -214,7 +214,7 @@ class OpenstackMonitor():
                         message_fr = "Instance " + instance.id
                         if instance.name:
                             message_fr += " (" + instance.name + ")"
-                        message_fr += u" creéée le " + created_at.strftime("%d/%m/%Y") + " (il y a " + str(created_delta) + " jour" + created_delta_s + u") allumée ("
+                        message_fr += u" créée le " + created_at.strftime("%d/%m/%Y") + " (il y a " + str(created_delta) + " jour" + created_delta_s + u") allumée ("
                         message_fr += instance.status.upper() + ") depuis longtemps (" + str(updated_delta) + " jour" + updated_delta_s + ")."
                         
                         sql = 'SELECT COUNT(id) AS nb FROM user_alerts WHERE status=1 AND message_en="%s";'
