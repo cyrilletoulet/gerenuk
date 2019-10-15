@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Wed 19 Jun 11:22:03 CEST 2019
+# Tue 15 Oct 08:32:46 CEST 2019
 
 import multiprocessing
 import ConfigParser
@@ -72,7 +72,8 @@ class LibvirtMonitor():
             host=self.config.get("database", "db_host"),
             user=self.config.get("database", "db_user"),
             password=self.config.get("database", "db_pass"),
-            database=self.config.get("database", "db_name")
+            database=self.config.get("database", "db_name"),
+            connection_timeout=self.config.get_int("database", "db_timeout")
         )
         self.db_cursor = self.database.cursor()
 
