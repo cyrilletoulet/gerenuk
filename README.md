@@ -136,6 +136,9 @@ db_user = gerenuk
 # The password corresponding to database user.
 db_pass = *secret*
 
+# The database connection timeout in seconds.
+db_timeout = 900
+
 
 [libvirt]
 # The file used by libvirt monitoring daemon to save pid.
