@@ -22,7 +22,7 @@ from setuptools import find_packages, setup
 
 setup(
     name = "gerenuk",
-    version = "1.2.0",
+    version = "1.2.1",
     description = "A cloud monitoring tools set",
     url = "https://github.com/cyrilletoulet/gerenuk",
 
