@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Tue 15 Oct 08:32:46 CEST 2019
+# Tue 15 Oct 10:57:25 CEST 2019
 
 import multiprocessing
 import ConfigParser
@@ -68,14 +68,7 @@ class LibvirtMonitor():
             raise gerenuk.MonitoringError('Failed to open connection to libvirtd')
 
         # MySQL
-        self.database = mysql.connector.connect(
-            host=self.config.get("database", "db_host"),
-            user=self.config.get("database", "db_user"),
-            password=self.config.get("database", "db_pass"),
-            database=self.config.get("database", "db_name"),
-            connection_timeout=self.config.get_int("database", "db_timeout")
-        )
-        self.db_cursor = self.database.cursor()
+        self.db_connect()
 
         # Hypervisor information
         self.hypervisor = dict()
@@ -88,10 +81,34 @@ class LibvirtMonitor():
             self.hypervisor["estimated_memory"] = 4096 * (coe+1)
 
         # Stats
-        self.monitoring = dict()
-        self.known_uuids = list()
-        self.loaded_stats = list()
-        self.load_stats()
+        try:
+            self.monitoring = dict()
+            self.known_uuids = list()
+            self.loaded_stats = list()
+            self.load_stats()
+        except mysql.connector.errors.OperationalError, e:
+            print >>sys.stderr, "Unable to reach database, try to reconnect..."
+            retries = 0
+            succeed = False
+
+            while retries < self.config.get_int("database", "max_conn_retries") and not(succeed):
+                retries += 1
+                wait = self.config.get_int("database", "wait_before_conn_retry") * retries
+                print >>sys.stderr, "Wait %d seconds before attempt to reconnect to database" % wait
+                time.sleep(wait)
+                
+                try:
+                    self.database.close()
+                    self.db_connect()
+                except mysql.connector.Error:
+                    print >>sys.stderr, "Try #%d failed" % retries
+                    continue
+
+                succeed = True
+                print >>sys.stderr, "Try #%d succeed" % retries
+
+            if not(succeed):
+                raise gerenuk.ConnectivityError(e)
 
 
 
@@ -119,6 +136,28 @@ class LibvirtMonitor():
 
 
     
+    def db_connect(self):
+        """
+        Try to connect to the database
+        :raise: (gerenuk.DependencyError) When a required dependency is missing
+        """
+        # Dependencies
+        try:
+            import mysql.connector
+        except Exception, e:
+            raise gerenuk.DependencyError(e)
+
+        self.database = mysql.connector.connect(
+            host=self.config.get("database", "db_host"),
+            user=self.config.get("database", "db_user"),
+            password=self.config.get("database", "db_pass"),
+            database=self.config.get("database", "db_name"),
+            connection_timeout=self.config.get_int("database", "db_timeout")
+        )
+        self.db_cursor = self.database.cursor()
+
+    
+
     def collect_stats(self):
         """
         Colelct all libvirt domains stats.
@@ -156,11 +195,36 @@ class LibvirtMonitor():
                 stats["mem_usage"] = round(mem_usage * 100., 2)
             except:
                 # The instance may be deleted during sleeping time
+                # If so, go to the next libvirt domain
                 continue
 
             self.store_stats(stats)
 
-        self.save_stats()
+        try:
+            self.save_stats()
+        except mysql.connector.errors.OperationalError, e:
+            print >>sys.stderr, "Unable to reach database, try to reconnect..."
+            retries = 0
+            succeed = False
+
+            while retries < self.config.get_int("database", "max_conn_retries") and not(succeed):
+                retries += 1
+                wait = self.config.get_int("database", "wait_before_conn_retry") * retries
+                print >>sys.stderr, "Wait %d seconds before attempt to reconnect to database" % wait
+                time.sleep(wait)
+                
+                try:
+                    self.database.close()
+                    self.db_connect()
+                except mysql.connector.Error:
+                    print >>sys.stderr, "Try #%d failed" % retries
+                    continue
+
+                succeed = True
+                print >>sys.stderr, "Try #%d succeed" % retries
+
+            if not(succeed):
+                raise gerenuk.ConnectivityError(e)
 
 
 

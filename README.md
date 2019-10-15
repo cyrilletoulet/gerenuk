@@ -136,6 +136,15 @@ db_user = gerenuk
 # The password corresponding to database user.
 db_pass = *secret*
 
+# The database connection timeout in seconds.
+db_timeout = 900
+
+# The maximum connection retries.
+max_conn_retries = 5
+
+# The time to wait before attempt a connection retry in seconds.
+wait_before_conn_retry = 3
+
 
 [libvirt]
 # The file used by libvirt monitoring daemon to save pid.
