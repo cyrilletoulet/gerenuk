@@ -151,6 +151,12 @@ wait_before_conn_retry = 3
 # Warning: this file has to be writable and readable by daemon user.
 pid_file = /var/run/gerenuk-libvirtmon.pid
 
+# The file used for logging.
+log_file = /var/log/gerenuk-libvirtmon.log
+
+# The log level (CRITICAL, ERROR, WARNING, INFO, DEBUG).
+log_level = ERROR
+
 # The instances monitoring frequency (in seconds).
 monitoring_frequency = 300
 
@@ -162,6 +168,12 @@ sampling_time = 3
 # The file used by libvirt monitoring daemon to save pid.
 # Warning: this file has to be writable and readable by daemon user.
 pid_file = /var/run/gerenuk-openstackmon.pid
+
+# The file used for logging.
+log_file = /var/log/gerenuk-libvirtmon.log
+
+# The log level (CRITICAL, ERROR, WARNING, INFO, DEBUG).
+log_level = ERROR
 
 # The project config directory
 projects_dir = /etc/gerenuk/project.d/

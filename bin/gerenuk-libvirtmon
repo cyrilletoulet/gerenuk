@@ -18,13 +18,14 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Thu 20 Jun 12:22:52 CEST 2019
+# Wed 16 Oct 13:23:17 CEST 2019
 
 import os
 import sys
 import time
 import getopt
 import gerenuk
+import logging
 import traceback
 import gerenuk.monitoring
 
@@ -65,6 +66,8 @@ def help():
 
 
 if __name__ == "__main__":
+    log = logging.getLogger("gerenuk")
+    
     try:
         # Arguments parsing
         config = gerenuk.Config()
@@ -77,6 +80,20 @@ if __name__ == "__main__":
             elif opt in ('-c', '--config'):
                 config.load(value)
 
+        # Logging
+        stderr_handler = logging.StreamHandler(sys.stderr)
+        log_file_handler = logging.FileHandler(config.get("libvirt", "log_file"))
+        log_file_format = logging.Formatter('%(asctime)s [%(levelname)s] %(process)d: %(message)s')
+        
+        log_level = config.get("libvirt", "log_level")
+        if log_level in config.LOG_LEVEL_MAPPING:
+            log.setLevel(config.LOG_LEVEL_MAPPING[log_level])
+            log_file_handler.setLevel(config.LOG_LEVEL_MAPPING[log_level])
+        stderr_handler.setLevel(logging.WARNING)
+
+        log_file_handler.setFormatter(log_file_format)
+        log.addHandler(log_file_handler)
+        log.addHandler(sdterr_handler)
 
         # Double-fork daemonization
         pid_file = config.get("libvirt", "pid_file")
@@ -112,24 +129,28 @@ if __name__ == "__main__":
 
     # Errors
     except IOError, e:
-        print >>sys.stderr, "Unable to open PID file: %s" % str(e)
+        log.error("Unable to open PID file: %s" % str(e))
         sys.exit(1)
 
     except OSError, e:
-        print >>sys.stderr, "Daemonization failed: %s" % str(e)
+        log.error("Daemonization failed: %s" % str(e))
         sys.exit(1)
 
     except gerenuk.ConfigError, e:
-        print >>sys.stderr, "Configuration error: %s" % str(e)
+        log.error("Configuration error: %s" % str(e))
         sys.exit(1)
 
     except gerenuk.DependencyError, e:
-        print >>sys.stderr, "Missing dependency: %s" % str(e)
+        log.error("Missing dependency: %s" % str(e))
+        sys.exit(1)
+
+    except gerenuk.MonitoringError, e:
+        log.error("Monitoring error: %s" % str(e))
         sys.exit(1)
 
     except Exception, e:
-        print >>sys.stderr, "Service failure: %s" % str(e)
-        print >>sys.stderr, traceback.format_exc()
+        log.critical("Service failure: %s" % str(e))
+        log.critical(traceback.format_exc())
         sys.exit(1)
 
     finally:

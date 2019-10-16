@@ -18,12 +18,13 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Wed 19 Jun 11:20:39 CEST 2019
+# Wed 16 Oct 13:41:25 CEST 2019
 
 
 from . import BASE_PATH
 from .exceptions import ConfigError
 import ConfigParser
+import logging
 import ast
 import sys
 import os
@@ -40,6 +41,13 @@ class Config():
         """
         self.config = ConfigParser.ConfigParser()
         self.load(BASE_PATH + "/defaults.conf")
+        self.LOG_LEVEL_MAPPING = {
+            "CRITICAL": logging.CRITICAL,
+            "ERROR": logging.ERROR,
+            "WARNING": logging.WARNING,
+            "INFO": logging.INFO,
+            "DEBUG": logging.DEBUG
+        }
 
 
     def load(self, config_file):
