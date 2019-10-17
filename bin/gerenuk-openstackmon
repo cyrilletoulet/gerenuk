@@ -24,6 +24,7 @@ import os
 import sys
 import time
 import getopt
+import logging
 import gerenuk
 import traceback
 import gerenuk.monitoring
@@ -92,7 +93,7 @@ if __name__ == "__main__":
 
         log_file_handler.setFormatter(log_file_format)
         log.addHandler(log_file_handler)
-        log.addHandler(sdterr_handler)
+        log.addHandler(stderr_handler)
 
         # Double-fork daemonization
         pid_file = config.get("openstack", "pid_file")

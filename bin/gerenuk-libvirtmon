@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Wed 16 Oct 13:23:17 CEST 2019
+# Thu 17 Oct 08:24:31 CEST 2019
 
 import os
 import sys
@@ -93,7 +93,7 @@ if __name__ == "__main__":
 
         log_file_handler.setFormatter(log_file_format)
         log.addHandler(log_file_handler)
-        log.addHandler(sdterr_handler)
+        log.addHandler(stderr_handler)
 
         # Double-fork daemonization
         pid_file = config.get("libvirt", "pid_file")
