@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Wed 10 Apr 10:12:26 CEST 2019
+# Tue 15 Oct 15:36:07 CEST 2019
 
 name = "gerenuk"
 
@@ -26,4 +26,4 @@ import os.path
 BASE_PATH = os.path.abspath(os.path.join(__file__, os.pardir))
 
 from .config import Config
-from .exceptions import ConfigError, DependencyError, MonitoringError
+from .exceptions import ConfigError, DependencyError, MonitoringError, ConnectivityError

@@ -141,7 +141,6 @@ class LibvirtMonitor():
         Try to connect to the database
         :raise: (gerenuk.DependencyError) When a required dependency is missing
         """
-        # Dependencies
         try:
             import mysql.connector
         except Exception, e:
@@ -162,6 +161,11 @@ class LibvirtMonitor():
         """
         Colelct all libvirt domains stats.
         """
+        try:
+            import mysql.connector
+        except Exception, e:
+            raise gerenuk.DependencyError(e)
+
         domain_ids = self.connection.listDomainsID()
         sampling_time = self.config.get_int("libvirt", "sampling_time")
 

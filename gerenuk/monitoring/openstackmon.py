@@ -19,7 +19,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Tue 15 Oct 08:36:46 CEST 2019
+# Thu 17 Oct 08:07:46 CEST 2019
 
 NOVA_API_VERSION = 2
 CINDER_API_VERSION = 3
@@ -320,6 +320,9 @@ class OpenstackMonitor():
                 trusted_subnets = project_config.get_list('networks', 'trusted_subnets')
                 tcp_whitelist = project_config.get_list('networks', 'tcp_whitelist')
                 udp_whitelist = project_config.get_list('networks', 'udp_whitelist')
+
+                if not("security_group_rules" in sg):
+                    continue
                 
                 for rule in sg["security_group_rules"]:
                     date_format = "%Y-%m-%dT%H:%M:%SZ"
