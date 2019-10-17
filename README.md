@@ -59,6 +59,8 @@ systemctl start gerenuk-openstackmon.service
 systemctl enable gerenuk-openstackmon.service
 ```
 
+Logs are stored in **/var/log/gerenuk-openstackmon.log**.
+
 
 
 ### Cloud hypervisors
@@ -82,6 +84,8 @@ Finally, start the service:
 systemctl start gerenuk-libvirtmon.service
 systemctl enable gerenuk-libvirtmon.service
 ```
+
+Logs are stored in **/var/log/gerenuk-libvirtmon.log**.
 
 
 ## Upgrade
