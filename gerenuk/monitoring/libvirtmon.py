@@ -18,13 +18,14 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Tue 15 Oct 10:57:25 CEST 2019
+# Fri 18 Oct 08:18:02 CEST 2019
 
 import multiprocessing
 import ConfigParser
 import platform
 import datetime
 import gerenuk
+import logging
 import psutil
 import time
 import sys
@@ -45,6 +46,25 @@ class LibvirtMonitor():
         :raise: (gerenuk.DependencyError) When a required dependency is missing
         :raise: (gerenuk.MonitoringError) When an internal error occurs
         """
+        # Config
+        self.config = config
+
+        # Logging
+        self.log = logging.getLogger("gerenuk-libvirtmon")
+        stderr_handler = logging.StreamHandler(sys.stderr)
+        log_file_handler = logging.FileHandler(self.config.get("libvirt", "log_file"))
+        log_file_format = logging.Formatter('%(asctime)s [%(levelname)s] %(process)d: %(message)s')
+        
+        log_level = self.config.get("libvirt", "log_level")
+        if log_level in self.config.LOG_LEVEL_MAPPING:
+            self.log.setLevel(self.config.LOG_LEVEL_MAPPING[log_level])
+            log_file_handler.setLevel(self.config.LOG_LEVEL_MAPPING[log_level])
+        stderr_handler.setLevel(logging.WARNING)
+
+        log_file_handler.setFormatter(log_file_format)
+        self.log.addHandler(log_file_handler)
+        self.log.addHandler(stderr_handler)
+
         # Dependencies
         try:
             import libvirt
@@ -52,8 +72,7 @@ class LibvirtMonitor():
         except Exception, e:
             raise gerenuk.DependencyError(e)
 
-        # Config
-        self.config = config
+        self.log.debug("gerenuk.monitoring dependencies successfully loaded")
 
         # Constants
         self.NB_VALUES = {
@@ -63,49 +82,62 @@ class LibvirtMonitor():
         }
 
         # LibVirt
+        self.log.debug("Connecting to libvirt...")
         self.connection = libvirt.openReadOnly(None)
         if self.connection == None:
             raise gerenuk.MonitoringError('Failed to open connection to libvirtd')
+        self.log.debug("Connection with libvirt successfully established")
 
         # MySQL
+        self.log.debug("Connecting to database...")
         self.db_connect()
+        self.log.debug("Connection with database successfully established")
 
         # Hypervisor information
         self.hypervisor = dict()
+        self.log.info("Starting hypervisor analyse...")
         self.hypervisor["hostname"] = platform.node()
+        self.log.debug("Hostname: %s" % self.hypervisor["hostname"])
         self.hypervisor["cores"] = multiprocessing.cpu_count()
+        self.log.debug("CPU: %d logical cores" % self.hypervisor["cores"])
         self.hypervisor["memory"] = dict(psutil.virtual_memory()._asdict())["total"]
+        self.log.debug("Virtual memory: %dB" % self.hypervisor["memory"])
         self.hypervisor["estimated_memory"] = self.hypervisor["memory"] / 1024**2
         coe = self.hypervisor["estimated_memory"] // 4096
         if 4096 * coe < self.hypervisor["estimated_memory"] < 4096 * (coe+1):
             self.hypervisor["estimated_memory"] = 4096 * (coe+1)
+        self.log.debug("Hypervisor memory: %dKB" % self.hypervisor["estimated_memory"])
+        self.log.debug("Hypervisor successfully analysed")
 
         # Stats
+        self.monitoring = dict()
+        self.known_uuids = list()
+        self.loaded_stats = list()
+
         try:
-            self.monitoring = dict()
-            self.known_uuids = list()
-            self.loaded_stats = list()
+            self.log.debug("Loading existing stats...")
             self.load_stats()
+            self.log.debug("Existing stats successfully loaded")
         except mysql.connector.errors.OperationalError, e:
-            print >>sys.stderr, "Unable to reach database, try to reconnect..."
+            self.log.warning("Connection with database lost, try to reconnect...")
             retries = 0
             succeed = False
 
             while retries < self.config.get_int("database", "max_conn_retries") and not(succeed):
                 retries += 1
                 wait = self.config.get_int("database", "wait_before_conn_retry") * retries
-                print >>sys.stderr, "Wait %d seconds before attempt to reconnect to database" % wait
+                self.log.warning("Wait %d seconds before new attempt..." % wait)
                 time.sleep(wait)
                 
                 try:
                     self.database.close()
                     self.db_connect()
                 except mysql.connector.Error:
-                    print >>sys.stderr, "Try #%d failed" % retries
+                    self.log.warning("Failed at attempt #%d!" % retries)
                     continue
 
                 succeed = True
-                print >>sys.stderr, "Try #%d succeed" % retries
+                self.log.warning("Connection with database successfully reestablished following connection lost")
 
             if not(succeed):
                 raise gerenuk.ConnectivityError(e)
@@ -166,10 +198,13 @@ class LibvirtMonitor():
         except Exception, e:
             raise gerenuk.DependencyError(e)
 
+        self.log.debug("Getting libvirt domain list")
         domain_ids = self.connection.listDomainsID()
         sampling_time = self.config.get_int("libvirt", "sampling_time")
+        self.log.debug("Sampling during %ds" % sampling_time)
 
         for domain_id in domain_ids:
+            self.log.info("Collecting %s domain stats..." % domain_id)
             try:
                 domain = self.connection.lookupByID(domain_id)
 
@@ -202,30 +237,36 @@ class LibvirtMonitor():
                 # If so, go to the next libvirt domain
                 continue
 
+            self.log.debug("Stats successfully collected for domain %s" % domain_id)
+
+            self.log.debug("Storing collected stats in cache...")
             self.store_stats(stats)
+            self.log.debug("Collected stats successfully stored in cache...")
 
         try:
+            self.log.debug("Saving cached stats...")
             self.save_stats()
+            self.log.debug("Cached stats successfully saved")
         except mysql.connector.errors.OperationalError, e:
-            print >>sys.stderr, "Unable to reach database, try to reconnect..."
+            self.log.warning("Unable to reach database, try to reconnect...")
             retries = 0
             succeed = False
 
             while retries < self.config.get_int("database", "max_conn_retries") and not(succeed):
                 retries += 1
                 wait = self.config.get_int("database", "wait_before_conn_retry") * retries
-                print >>sys.stderr, "Wait %d seconds before attempt to reconnect to database" % wait
+                self.log.warning("Wait %d seconds before attempt to reconnect to database" % wait)
                 time.sleep(wait)
                 
                 try:
                     self.database.close()
                     self.db_connect()
                 except mysql.connector.Error:
-                    print >>sys.stderr, "Try #%d failed" % retries
+                    self.log.warning("Try #%d failed" % retries)
                     continue
 
                 succeed = True
-                print >>sys.stderr, "Try #%d succeed" % retries
+                self.log.warning("Try #%d succeed" % retries)
 
             if not(succeed):
                 raise gerenuk.ConnectivityError(e)
@@ -255,6 +296,7 @@ class LibvirtMonitor():
             operator = " OR"
 
         if len(local_uuids) > 0:
+            self.log.info("Found %d existing instance(s) for this hypervisor in database" % len(local_uuids))
             self.db_cursor.execute(sql)
             rows = self.db_cursor.fetchall()
 
@@ -264,6 +306,8 @@ class LibvirtMonitor():
                 (hourly_cpu_usage, daily_cpu_usage, weekly_cpu_usage) = row[7:10]
                 (hourly_mem_usage, daily_mem_usage, weekly_mem_usage) = row[10:13]
                 (deleted, last_update) = row[13:]
+
+                self.log.info("Loading existing stats of instance %s" % uuid)
 
                 if not uuid in self.monitoring:
                     self.monitoring[uuid] = {
@@ -304,6 +348,8 @@ class LibvirtMonitor():
                     self.monitoring[uuid]["weekly"]["mem"] += [float(n) for n in weekly_mem_usage.split(',')]
 
                 self.loaded_stats.append(uuid)
+        else:
+            self.log.info("No existing instance for thir hypervisor in database")
 
 
 
@@ -315,6 +361,8 @@ class LibvirtMonitor():
         """
         uuid = stats["uuid"]
         now = datetime.datetime.now()
+
+        self.log.debug("Caching stats for instance %s" % uuid)
 
         if not uuid in self.monitoring:
             self.monitoring[uuid] = {
@@ -353,6 +401,7 @@ class LibvirtMonitor():
         for period in ["hourly", "daily", "weekly"]:
             for metric in ["vcpu", "cpu", "mem"]:
                 if len(self.monitoring[uuid][period][metric]) > self.NB_VALUES[period]:
+                    self.log.debug("%s:%s stat rotation for instance %s" %s (period, metric, uuid))
                     self.monitoring[uuid][period][metric] = self.monitoring[uuid][period][metric][1:self.NB_VALUES[period]+1]
 
 
@@ -362,12 +411,14 @@ class LibvirtMonitor():
         Save all collected stats to database.
         """
         # Tag all existing entries as deleted for hypervisor
+        self.log.debug("Tagging all existing entries as deleted for hypervisor %s" % self.hypervisor["hostname"])
         sql = 'UPDATE instances_monitoring SET deleted="1" WHERE hypervisor="%s";'
         self.db_cursor.execute(sql % (self.hypervisor["hostname"],))
 
         for uuid in self.monitoring:
             if uuid in self.loaded_stats or uuid in self.known_uuids:
                 # UPDATE
+                self.log.debug("Found existing entry to update in database for instance %s" % uuid)
                 now = datetime.datetime.now()
 
                 sql = 'UPDATE instances_monitoring SET deleted="0", last_update="%s", vcores="%d", vram="%d", '
@@ -386,6 +437,7 @@ class LibvirtMonitor():
 
             else:
                 # INSERT
+                self.log.debug("Creating new entry in database for instance %s" % uuid)
                 fields = ['uuid', 'hypervisor', 'vcores', 'vram']
                 fields += ['hourly_vcpu_usage', 'daily_vcpu_usage', 'weekly_vcpu_usage']
                 fields += ['hourly_cpu_usage', 'daily_cpu_usage', 'weekly_cpu_usage']
