@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Wed 16 Oct 13:41:25 CEST 2019
+# Thu 17 Oct 12:47:29 CEST 2019
 
 
 from . import BASE_PATH
@@ -41,6 +41,8 @@ class Config():
         """
         self.config = ConfigParser.ConfigParser()
         self.load(BASE_PATH + "/defaults.conf")
+
+        # Constants
         self.LOG_LEVEL_MAPPING = {
             "CRITICAL": logging.CRITICAL,
             "ERROR": logging.ERROR,

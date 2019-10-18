@@ -66,7 +66,7 @@ def help():
 
 
 if __name__ == "__main__":
-    log = logging.getLogger("gerenuk")
+    log = logging.getLogger("gerenuk-libvirtmon-daemon")
     
     try:
         # Arguments parsing

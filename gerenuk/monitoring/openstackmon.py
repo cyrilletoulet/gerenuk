@@ -19,7 +19,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Thu 17 Oct 08:07:46 CEST 2019
+# Fri 18 Oct 08:29:37 CEST 2019
 
 NOVA_API_VERSION = 2
 CINDER_API_VERSION = 3
@@ -33,6 +33,7 @@ SEVERITY_CRITICAL = 3
 from netaddr import *
 import datetime
 import gerenuk
+import logging
 import time
 import sys
 import os
@@ -50,17 +51,37 @@ class OpenstackMonitor():
 
         :param config: (gerenuk.Config) The gerenuk configuration
         """
+        # Config
+        self.config = config
+
+        # Logging
+        self.log = logging.getLogger("gerenuk-openstackmon")
+        stderr_handler = logging.StreamHandler(sys.stderr)
+        log_file_handler = logging.FileHandler(self.config.get("openstack", "log_file"))
+        log_file_format = logging.Formatter('%(asctime)s [%(levelname)s] %(process)d: %(message)s')
+        
+        log_level = self.config.get("openstack", "log_level")
+        if log_level in self.config.LOG_LEVEL_MAPPING:
+            self.log.setLevel(self.config.LOG_LEVEL_MAPPING[log_level])
+            log_file_handler.setLevel(self.config.LOG_LEVEL_MAPPING[log_level])
+        stderr_handler.setLevel(logging.WARNING)
+
+        log_file_handler.setFormatter(log_file_format)
+        self.log.addHandler(log_file_handler)
+        self.log.addHandler(stderr_handler)
+
         # Dependencies
         try:
             import mysql.connector
         except Exception, e:
             raise gerenuk.DependencyError(e)
 
-        # Config
-        self.config = config
+        self.log.debug("gerenuk.monitoring dependencies successfully loaded")
 
         # MySQL
+        self.log.debug("Connecting to database...")
         self.db_connect()
+        self.log.debug("Connection with database successfully established")
 
 
 
@@ -118,10 +139,15 @@ class OpenstackMonitor():
             if not(project[-5:] == ".conf"):
                 continue
 
+            self.log.debug("Loading configuration for project %s..." % project)
             project_config = gerenuk.Config()
-            project_config.load(projects_dir + "/" + project)
+            project_config_file = projects_dir + "/" + project
+            project_config.load(project_config_file)
+            self.log.debug("Configuration file %s successfully loaded" % project_config_file)
 
+            self.log.info("Monitoring project %s..." % project)
             self.monitor_project(project_config)
+            self.log.debug("Project %s successfully monitored" % project)
 
 
     def monitor_project(self, project_config):
@@ -151,18 +177,21 @@ class OpenstackMonitor():
         credentials["username"] = project_config.get("keystone_authtoken", "username")
         credentials["password"] = project_config.get("keystone_authtoken", "password")
 
+        self.log.debug("Instantiating OpenStack APIs...")
         auth = keystone_identity.v3.Password(**credentials)
         session = keystone_session.Session(auth=auth)
         keystone = keystone_client.Client(session=session)
         nova = nova_client.Client(NOVA_API_VERSION, session=session)
         cinder = cinder_client.Client(CINDER_API_VERSION, session=session)
         neutron = neutron_client.Client(session=session)
+        self.log.debug("OpenStack APIs successfully instantiated")
 
         now = datetime.date.today()
         timestamp = datetime.datetime.now()
 
         try:
             # Instances
+            self.log.debug("Begining of instances monitoring...")
             for instance in nova.servers.list():
                 whitelist = project_config.get_list('instances', 'whitelist')
                 if instance.id in whitelist:
@@ -182,6 +211,8 @@ class OpenstackMonitor():
                     updated_delta_s = ''
 
                 if instance.status.upper() == "ERROR":
+                    self.log.debug("Found instance %s in ERROR status" % instance.id)
+
                     message_en = "Instance " + instance.id
                     if instance.name:
                         message_en += " (" + instance.name + ")"
@@ -202,6 +233,8 @@ class OpenstackMonitor():
                 
                 elif instance.status.upper() == "SHUTOFF":
                     if updated_delta >= project_config.get_int('instances', 'stopped_alert_delay'):
+                        self.log.debug("Found instance %s in SHUTOFF status since a while" % instance.id)
+
                         message_en = "Instance " + instance.id
                         if instance.name:
                             message_en += " (" + instance.name + ")"
@@ -222,6 +255,8 @@ class OpenstackMonitor():
                 
                 elif instance.status.upper() == "ACTIVE":
                     if updated_delta >= project_config.get_int('instances', 'running_alert_delay'):
+                        self.log.debug("Found instance %s in ACTIVE status since a while" % instance.id)
+
                         message_en = "Instance " + instance.id
                         if instance.name:
                             message_en += " (" + instance.name + ")"
@@ -241,6 +276,7 @@ class OpenstackMonitor():
                             self.db_cursor.execute(sql % (instance.user_id, instance.tenant_id, SEVERITY_INFO, message_fr, message_en, timestamp))
 
             # Volumes
+            self.log.debug("Begining of volumes monitoring...")
             for volume in cinder.volumes.list():
                 whitelist = project_config.get_list('volumes', 'whitelist')
                 if volume.id in whitelist:
@@ -260,6 +296,8 @@ class OpenstackMonitor():
                     updated_delta_s = ''
 
                 if volume.status.upper() in ("ERROR", "ERROR_DELETING"):
+                    self.log.debug("Found volume %s in %s status" % (volume.id, volume.status.upper()))
+
                     message_en = "Volume " + volume.id
                     if volume.name:
                         message_en += " (" + volume.name + ")"
@@ -281,6 +319,8 @@ class OpenstackMonitor():
                 elif volume.status.upper() == "AVAILABLE":
                     if not(volume.bootable) and not(volume.name):
                         if updated_delta >= project_config.get_int('volumes', 'orphan_alert_delay'):
+                            self.log.debug("Found probably orphan volume %s" % volume.id)
+
                             message_en = "Volume " + volume.id
                             message_en += " created on " + created_at.strftime("%d/%m/%Y") + " (" + str(created_delta) + " day" + created_delta_s + "  ago) probably orphan ("
                             message_en += volume.status.upper() + ") since " + str(updated_delta) + " day" + updated_delta_s + '.'
@@ -297,6 +337,8 @@ class OpenstackMonitor():
                             
                     else:
                         if updated_delta >= project_config.get_int('volumes', 'inactive_alert_delay'):
+                            self.log.debug("Found volume %s inactive since a while" % volume.id)
+
                             message_en = "Volume " + volume.id
                             if volume.name:
                                 message_en += " (" + volume.name + ")"
@@ -316,6 +358,7 @@ class OpenstackMonitor():
                                 self.db_cursor.execute(sql % (volume.user_id, getattr(volume, "os-vol-tenant-attr:tenant_id"), SEVERITY_ALERT, message_fr, message_en, timestamp))
 
             # Security Groups
+            self.log.debug("Begining of security groupes monitoring...")
             for sg in neutron.list_security_groups()['security_groups']:
                 trusted_subnets = project_config.get_list('networks', 'trusted_subnets')
                 tcp_whitelist = project_config.get_list('networks', 'tcp_whitelist')
@@ -341,6 +384,7 @@ class OpenstackMonitor():
 
                     if sg["name"] == "default":
                         if rule['remote_ip_prefix'] and rule['protocol'] != "icmp":
+                            self.log.debug("Found user defined rule in default security group")
                             message_en = "User defined rules in default security group (reminder: it's forbidden)!"
                             message_fr = u"Règles définies par des utilisateurs présentes dans le groupe de sécurité default (rappel: c'est interdit) !"
 
@@ -362,6 +406,8 @@ class OpenstackMonitor():
                         continue
 
                     if rule["remote_ip_prefix"] in ("0.0.0.0/0", "::/0"):
+                        self.log.debug("Found wide opened rule in security group %s" % sg['name'])
+                        
                         all_ports = False
                         ports = "Ports " + str(rule['port_range_min']) + ':' + str(rule['port_range_max'])
                         if rule['port_range_min'] == rule['port_range_max']:
@@ -406,6 +452,8 @@ class OpenstackMonitor():
                             else:
                                 ports = "Port " + str(rule['port_range_min'])
 
+                        self.log.debug("Found wide opened rule in security group %s" % sg['name'])
+
                         message_en = ports
                         if all_ports:
                             message_en = "All ports"
@@ -437,6 +485,8 @@ class OpenstackMonitor():
                         else:
                             continue
 
+                        self.log.debug("Found unknown opened rule in security group %s" % sg['name'])
+
                         ports_en = str(counter) + " port"
                         if counter > 1:
                             ports_en += 's'
@@ -456,7 +506,10 @@ class OpenstackMonitor():
                         if self.db_cursor.fetchone()[0] == 0:
                             sql = 'INSERT INTO user_alerts(project, severity, message_fr, message_en, timestamp) VALUES("%s", "%d", "%s", "%s", "%s");'
                             self.db_cursor.execute(sql % (rule["tenant_id"], SEVERITY_ALERT, message_fr, message_en, timestamp))
+
+            self.log.debug("Commiting requests to database...")
             self.database.commit()
+            self.log.debug("Database requests successfully commited")
 
         except Exception, e:
             raise gerenuk.MonitoringError(e)
