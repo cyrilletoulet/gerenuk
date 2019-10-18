@@ -401,7 +401,7 @@ class LibvirtMonitor():
         for period in ["hourly", "daily", "weekly"]:
             for metric in ["vcpu", "cpu", "mem"]:
                 if len(self.monitoring[uuid][period][metric]) > self.NB_VALUES[period]:
-                    self.log.debug("%s:%s stat rotation for instance %s" %s (period, metric, uuid))
+                    self.log.debug("%s:%s stat rotation for instance %s" % (period, metric, uuid))
                     self.monitoring[uuid][period][metric] = self.monitoring[uuid][period][metric][1:self.NB_VALUES[period]+1]
 
 
