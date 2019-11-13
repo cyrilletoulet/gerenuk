@@ -19,7 +19,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Fri 18 Oct 08:29:37 CEST 2019
+# Wed 13 Nov 15:28:42 CET 2019
 
 NOVA_API_VERSION = 2
 CINDER_API_VERSION = 3
@@ -190,6 +190,12 @@ class OpenstackMonitor():
         timestamp = datetime.datetime.now()
 
         try:
+            # Project
+            project_id = ""
+            for project in keystone.projects.list():
+                if credentials["project_name"] == project.name:
+                    project_id = project.id
+            
             # Instances
             self.log.debug("Begining of instances monitoring...")
             for instance in nova.servers.list():
@@ -360,6 +366,9 @@ class OpenstackMonitor():
             # Security Groups
             self.log.debug("Begining of security groupes monitoring...")
             for sg in neutron.list_security_groups()['security_groups']:
+                if sg["project_id"] != project_id:
+                    continue
+                
                 trusted_subnets = project_config.get_list('networks', 'trusted_subnets')
                 tcp_whitelist = project_config.get_list('networks', 'tcp_whitelist')
                 udp_whitelist = project_config.get_list('networks', 'udp_whitelist')
