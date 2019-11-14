@@ -202,6 +202,7 @@ class OpenstackMonitor():
             self.db_cursor.execute(sql % (project_id,))
             unread_alerts = self.db_cursor.fetchall()
 
+
             # Instances
             self.log.debug("Begining of instances monitoring...")
             for instance in nova.servers.list():
@@ -251,7 +252,7 @@ class OpenstackMonitor():
                     # Update or keep unchanged existing alerts
                     if matching_alert:
                         if matching_alert[2] != message_en:
-                            self.log.debug("The instance %s has matching unread alert in database. Updating old messages..." % instance.id)
+                            self.log.info("The instance %s has matching unread alert in database. Updating old messages..." % instance.id)
                             sql = 'UPDATE user_alerts SET message_fr="%s", message_en="%s", timestamp="%s" WHERE id="%d";'
                             self.db_cursor.execute(sql % (message_fr, message_en, timestamp, matching_alert[0]))
                             continue
@@ -294,7 +295,7 @@ class OpenstackMonitor():
                         # Update or keep unchanged existing alerts
                         if matching_alert:
                             if matching_alert[2] != message_en:
-                                self.log.debug("The instance %s has matching unread alert in database. Updating old messages..." % instance.id)
+                                self.log.info("The instance %s has matching unread alert in database. Updating old messages..." % instance.id)
                                 sql = 'UPDATE user_alerts SET message_fr="%s", message_en="%s", timestamp="%s" WHERE id="%d";'
                                 self.db_cursor.execute(sql % (message_fr, message_en, timestamp, matching_alert[0]))
                                 continue
@@ -337,7 +338,7 @@ class OpenstackMonitor():
                         # Update or keep unchanged existing alerts
                         if matching_alert:
                             if matching_alert[2] != message_en:
-                                self.log.debug("The instance %s has matching unread alert in database. Updating old messages..." % instance.id)
+                                self.log.info("The instance %s has matching unread alert in database. Updating old messages..." % instance.id)
                                 sql = 'UPDATE user_alerts SET message_fr="%s", message_en="%s", timestamp="%s" WHERE id="%d";'
                                 self.db_cursor.execute(sql % (message_fr, message_en, timestamp, matching_alert[0]))
                                 continue
@@ -349,6 +350,7 @@ class OpenstackMonitor():
                         self.log.info("Create alert for instance %s (active since a while)" % instance.id)
                         sql = 'INSERT INTO user_alerts(uuid, project, severity, message_fr, message_en, timestamp) VALUES("%s", "%s", "%d", "%s", "%s", "%s");'
                         self.db_cursor.execute(sql % (instance.user_id, instance.tenant_id, SEVERITY_INFO, message_fr, message_en, timestamp))
+
 
             # Volumes
             self.log.debug("Begining of volumes monitoring...")
@@ -373,6 +375,17 @@ class OpenstackMonitor():
                 if volume.status.upper() in ("ERROR", "ERROR_DELETING"):
                     self.log.debug("Found volume %s in %s status" % (volume.id, volume.status.upper()))
 
+                    # Look for matching unread alert
+                    matching_alert = None
+                    regex = re.compile("^Volume %s ([\(])?.*[\)\s]?created on [0-9]{2}/[0-9]{2}/[0-9]{4} \([0-9]+ day[s]? ago\) in error \(ERROR|ERROR_DELETING\) since [0-9]+ day[s]?\.$" % volume.id)
+                        
+                    for alert in unread_alerts:
+                        (id, user_id, message_en) = alert
+                        if regex.match(message_en) and user_id == volume.user_id:
+                            matching_alert = alert
+                            break
+                            
+                    # Define alert messages
                     message_en = "Volume " + volume.id
                     if volume.name:
                         message_en += " (" + volume.name + ")"
@@ -385,52 +398,105 @@ class OpenstackMonitor():
                     message_fr += u" créée le " + created_at.strftime("%d/%m/%Y") + " (il y a " + str(created_delta) + " jour" + created_delta_s + " ) en erreur ("
                     message_fr += volume.status.upper() + ") depuis " + str(updated_delta) + " jour" + updated_delta_s + '.'
                     
-                    sql = 'SELECT COUNT(id) AS nb FROM user_alerts WHERE status=1 AND message_en="%s";'
-                    self.db_cursor.execute(sql % (message_en,))
-                    if self.db_cursor.fetchone()[0] == 0:
-                        sql = 'INSERT INTO user_alerts(uuid, project, severity, message_fr, message_en, timestamp) VALUES("%s", "%s", "%d", "%s", "%s", "%s");'
-                        self.db_cursor.execute(sql % (volume.user_id, getattr(volume, "os-vol-tenant-attr:tenant_id"), SEVERITY_WARNING, message_fr, message_en, timestamp))
+                    # Update or keep unchanged existing alerts
+                    if matching_alert:
+                        if matching_alert[2] != message_en:
+                            self.log.info("The volume %s has matching unread alert in database. Updating old messages..." % volume.id)
+                            sql = 'UPDATE user_alerts SET message_fr="%s", message_en="%s", timestamp="%s" WHERE id="%d";'
+                            self.db_cursor.execute(sql % (message_fr, message_en, timestamp, matching_alert[0]))
+                            continue
+
+                        self.log.debug("The volume %s has matching unread alert in database. Up to date" % volume.id)
+                        continue
+
+                    # Create new alert
+                    self.log.info("Create alert for volume %s (in error)" % volume.id)
+                    sql = 'INSERT INTO user_alerts(uuid, project, severity, message_fr, message_en, timestamp) VALUES("%s", "%s", "%d", "%s", "%s", "%s");'
+                    self.db_cursor.execute(sql % (volume.user_id, getattr(volume, "os-vol-tenant-attr:tenant_id"), SEVERITY_WARNING, message_fr, message_en, timestamp))
 
                 elif volume.status.upper() == "AVAILABLE":
                     if not(volume.bootable) and not(volume.name):
                         if updated_delta >= project_config.get_int('volumes', 'orphan_alert_delay'):
                             self.log.debug("Found probably orphan volume %s" % volume.id)
 
+                            # Look for matching unread alert
+                            matching_alert = None
+                            regex = re.compile("^Volume %s created on [0-9]{2}/[0-9]{2}/[0-9]{4} \([0-9]+ day[s]? ago\) probably orphan \(AVAILABLE\) since [0-9]+ day[s]?\.$" % volume.id)
+                        
+                            for alert in unread_alerts:
+                                (id, user_id, message_en) = alert
+                                if regex.match(message_en) and user_id == volume.user_id:
+                                    matching_alert = alert
+                                    break
+                            
+                            # Define alert messages
                             message_en = "Volume " + volume.id
-                            message_en += " created on " + created_at.strftime("%d/%m/%Y") + " (" + str(created_delta) + " day" + created_delta_s + "  ago) probably orphan ("
-                            message_en += volume.status.upper() + ") since " + str(updated_delta) + " day" + updated_delta_s + '.'
+                            message_en += " created on " + created_at.strftime("%d/%m/%Y") + " (" + str(created_delta) + " day" + created_delta_s + " ago) probably orphan ("
+                            message_en += "AVAILABLE) since " + str(updated_delta) + " day" + updated_delta_s + '.'
 
                             message_fr = "Volume " + volume.id
-                            message_fr += u" créée le " + created_at.strftime("%d/%m/%Y") + " (il y a " + str(created_delta) + " jour" + created_delta_s + " ) probablement orphelin ("
-                            message_fr += volume.status.upper() + ") depuis " + str(updated_delta) + " jour" + updated_delta_s + '.'
+                            message_fr += u" créée le " + created_at.strftime("%d/%m/%Y") + " (il y a " + str(created_delta) + " jour" + created_delta_s + ") probablement orphelin ("
+                            message_fr += "AVAILABLE) depuis " + str(updated_delta) + " jour" + updated_delta_s + '.'
                         
-                            sql = 'SELECT COUNT(id) AS nb FROM user_alerts WHERE status=1 AND message_en="%s";'
-                            self.db_cursor.execute(sql % (message_en,))
-                            if self.db_cursor.fetchone()[0] == 0:
-                                sql = 'INSERT INTO user_alerts(uuid, project, severity, message_fr, message_en, timestamp) VALUES("%s", "%s", "%d", "%s", "%s", "%s");'
-                                self.db_cursor.execute(sql % (volume.user_id, getattr(volume, "os-vol-tenant-attr:tenant_id"), SEVERITY_ALERT, message_fr, message_en, timestamp))
+                            # Update or keep unchanged existing alerts
+                            if matching_alert:
+                                if matching_alert[2] != message_en:
+                                    self.log.info("The volume %s has matching unread alert in database. Updating old messages..." % volume.id)
+                                    sql = 'UPDATE user_alerts SET message_fr="%s", message_en="%s", timestamp="%s" WHERE id="%d";'
+                                    self.db_cursor.execute(sql % (message_fr, message_en, timestamp, matching_alert[0]))
+                                    continue
+
+                                self.log.debug("The volume %s has matching unread alert in database. Up to date" % volume.id)
+                                continue
+
+                            # Create new alert
+                            self.log.info("Create alert for volume %s (probably orphan)" % volume.id)
+                            sql = 'INSERT INTO user_alerts(uuid, project, severity, message_fr, message_en, timestamp) VALUES("%s", "%s", "%d", "%s", "%s", "%s");'
+                            self.db_cursor.execute(sql % (volume.user_id, getattr(volume, "os-vol-tenant-attr:tenant_id"), SEVERITY_ALERT, message_fr, message_en, timestamp))
                             
                     else:
                         if updated_delta >= project_config.get_int('volumes', 'inactive_alert_delay'):
                             self.log.debug("Found volume %s inactive since a while" % volume.id)
 
+                            # Look for matching unread alert
+                            matching_alert = None
+                            regex = re.compile("^Volume %s ([\(])?.*[\)\s]?created on [0-9]{2}/[0-9]{2}/[0-9]{4} \([0-9]+ day[s]? ago\) inactive \(AVAILABLE\) since [0-9]+ day[s]?\.$" % volume.id)
+                        
+                            for alert in unread_alerts:
+                                (id, user_id, message_en) = alert
+                                if regex.match(message_en) and user_id == volume.user_id:
+                                    matching_alert = alert
+                                    break
+                            
+                            # Define alert messages
                             message_en = "Volume " + volume.id
                             if volume.name:
                                 message_en += " (" + volume.name + ")"
-                            message_en += " created on " + created_at.strftime("%d/%m/%Y") + " (" + str(created_delta) + " day" + created_delta_s + "  ago) inactive ("
+                            message_en += " created on " + created_at.strftime("%d/%m/%Y") + " (" + str(created_delta) + " day" + created_delta_s + " ago) inactive ("
                             message_en += volume.status.upper() + ") since " + str(updated_delta) + " day" + updated_delta_s + '.'
 
                             message_fr = "Volume " + volume.id
                             if volume.name:
                                 message_fr += " (" + volume.name + ")"
-                            message_fr += u" créée le " + created_at.strftime("%d/%m/%Y") + " (il y a " + str(created_delta) + " jour" + created_delta_s + u" ) non utilisé ("
+                            message_fr += u" créée le " + created_at.strftime("%d/%m/%Y") + " (il y a " + str(created_delta) + " jour" + created_delta_s + u") non utilisé ("
                             message_fr += volume.status.upper() + ") depuis " + str(updated_delta) + " jour" + updated_delta_s + '.'
 
-                            sql = 'SELECT COUNT(id) AS nb FROM user_alerts WHERE status=1 AND message_en="%s";'
-                            self.db_cursor.execute(sql % (message_en,))
-                            if self.db_cursor.fetchone()[0] == 0:
-                                sql = 'INSERT INTO user_alerts(uuid, project, severity, message_fr, message_en, timestamp) VALUES("%s", "%s", "%d", "%s", "%s", "%s");'
-                                self.db_cursor.execute(sql % (volume.user_id, getattr(volume, "os-vol-tenant-attr:tenant_id"), SEVERITY_ALERT, message_fr, message_en, timestamp))
+                            # Update or keep unchanged existing alerts
+                            if matching_alert:
+                                if matching_alert[2] != message_en:
+                                    self.log.info("The volume %s has matching unread alert in database. Updating old messages..." % volume.id)
+                                    sql = 'UPDATE user_alerts SET message_fr="%s", message_en="%s", timestamp="%s" WHERE id="%d";'
+                                    self.db_cursor.execute(sql % (message_fr, message_en, timestamp, matching_alert[0]))
+                                    continue
+
+                                self.log.debug("The volume %s has matching unread alert in database. Up to date" % volume.id)
+                                continue
+
+                            # Create new alert
+                            self.log.info("Create alert for volume %s (inactive since a while)" % volume.id)
+                            sql = 'INSERT INTO user_alerts(uuid, project, severity, message_fr, message_en, timestamp) VALUES("%s", "%s", "%d", "%s", "%s", "%s");'
+                            self.db_cursor.execute(sql % (volume.user_id, getattr(volume, "os-vol-tenant-attr:tenant_id"), SEVERITY_ALERT, message_fr, message_en, timestamp))
+
 
             # Security Groups
             self.log.debug("Begining of security groupes monitoring...")
