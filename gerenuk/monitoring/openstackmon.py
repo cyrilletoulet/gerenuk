@@ -19,7 +19,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Wed 13 Nov 15:28:42 CET 2019
+# Thu 14 Nov 08:59:44 CET 2019
 
 NOVA_API_VERSION = 2
 CINDER_API_VERSION = 3
@@ -37,6 +37,7 @@ import logging
 import time
 import sys
 import os
+import re
 
 
 
@@ -195,7 +196,12 @@ class OpenstackMonitor():
             for project in keystone.projects.list():
                 if credentials["project_name"] == project.name:
                     project_id = project.id
-            
+
+            # Unread alerts
+            sql = 'SELECT id, uuid, message_en FROM user_alerts WHERE status=1 AND project="%s";'
+            self.db_cursor.execute(sql % (project_id,))
+            unread_alerts = self.db_cursor.fetchall()
+
             # Instances
             self.log.debug("Begining of instances monitoring...")
             for instance in nova.servers.list():
@@ -219,67 +225,130 @@ class OpenstackMonitor():
                 if instance.status.upper() == "ERROR":
                     self.log.debug("Found instance %s in ERROR status" % instance.id)
 
+                    # Look for matching unread alert
+                    matching_alert = None
+                    regex = re.compile("^Instance %s ([\(])?.*[\)\s]?created on [0-9]{2}/[0-9]{2}/[0-9]{4} \([0-9]+ day[s]? ago\) in error \(ERROR\) since [0-9]+ day[s]?\.$" % instance.id)
+                        
+                    for alert in unread_alerts:
+                        (id, user_id, message_en) = alert
+                        if regex.match(message_en) and user_id == instance.user_id:
+                            matching_alert = alert
+                            break
+                            
+                    # Define alert messages
                     message_en = "Instance " + instance.id
                     if instance.name:
                         message_en += " (" + instance.name + ")"
                     message_en += " created on " + created_at.strftime("%d/%m/%Y") + " (" + str(created_delta) + " day" + created_delta_s + " ago) in error ("
-                    message_en += instance.status.upper() + ") since " + str(updated_delta) + " day" + updated_delta_s + '.'
+                    message_en += "ERROR) since " + str(updated_delta) + " day" + updated_delta_s + '.'
 
                     message_fr = "Instance " + instance.id
                     if instance.name:
                         message_fr += " (" + instance.name + ")"
                     message_fr += u" créée le " + created_at.strftime("%d/%m/%Y") + " (il y a " + str(created_delta) + " jour" + created_delta_s + ") en erreur ("
-                    message_fr += instance.status.upper() + ") depuis " + str(updated_delta) + " jour" + updated_delta_s + '.'
+                    message_fr += "ERROR) depuis " + str(updated_delta) + " jour" + updated_delta_s + '.'
                     
-                    sql = 'SELECT COUNT(id) AS nb FROM user_alerts WHERE status=1 AND message_en="%s";'
-                    self.db_cursor.execute(sql % (message_en,))
-                    if self.db_cursor.fetchone()[0] == 0:
-                        sql = 'INSERT INTO user_alerts(uuid, project, severity, message_fr, message_en, timestamp) VALUES("%s", "%s", "%d", "%s", "%s", "%s");'
-                        self.db_cursor.execute(sql % (instance.user_id, instance.tenant_id, SEVERITY_WARNING, message_fr, message_en, timestamp))
+                    # Update or keep unchanged existing alerts
+                    if matching_alert:
+                        if matching_alert[2] != message_en:
+                            self.log.debug("The instance %s has matching unread alert in database. Updating old messages..." % instance.id)
+                            sql = 'UPDATE user_alerts SET message_fr="%s", message_en="%s", timestamp="%s" WHERE id="%d";'
+                            self.db_cursor.execute(sql % (message_fr, message_en, timestamp, matching_alert[0]))
+                            continue
+
+                        self.log.debug("The instance %s has matching unread alert in database. Up to date" % instance.id)
+                        continue
+
+                    # Create new alert
+                    self.log.info("Create alert for instance %s (in error)" % instance.id)
+                    sql = 'INSERT INTO user_alerts(uuid, project, severity, message_fr, message_en, timestamp) VALUES("%s", "%s", "%d", "%s", "%s", "%s");'
+                    self.db_cursor.execute(sql % (instance.user_id, instance.tenant_id, SEVERITY_WARNING, message_fr, message_en, timestamp))
                 
                 elif instance.status.upper() == "SHUTOFF":
                     if updated_delta >= project_config.get_int('instances', 'stopped_alert_delay'):
                         self.log.debug("Found instance %s in SHUTOFF status since a while" % instance.id)
 
+                        # Look for matching unread alert
+                        matching_alert = None
+                        regex = re.compile("^Instance %s ([\(])?.*[\)\s]?created on [0-9]{2}/[0-9]{2}/[0-9]{4} \([0-9]+ day[s]? ago\) stopped \(SHUTOFF\) since [0-9]+ day[s]?\.$" % instance.id)
+                        
+                        for alert in unread_alerts:
+                            (id, user_id, message_en) = alert
+                            if regex.match(message_en) and user_id == instance.user_id:
+                                matching_alert = alert
+                                break
+                            
+                        # Define alert messages
                         message_en = "Instance " + instance.id
                         if instance.name:
                             message_en += " (" + instance.name + ")"
                         message_en += " created on " + created_at.strftime("%d/%m/%Y") + " (" + str(created_delta) + " day" + created_delta_s + " ago) stopped ("
-                        message_en += instance.status.upper() + ") since " + str(updated_delta) + " day" + updated_delta_s + '.'
+                        message_en += "SHUTOFF) since " + str(updated_delta) + " day" + updated_delta_s + '.'
 
                         message_fr = "Instance " + instance.id
                         if instance.name:
                             message_fr += " (" + instance.name + ")"
                         message_fr += u" créée le " + created_at.strftime("%d/%m/%Y") + " (il y a " + str(created_delta) + " jour" + created_delta_s + u") éteinte ("
-                        message_fr += instance.status.upper() + ") depuis " + str(updated_delta) + " jour" + updated_delta_s + '.'
+                        message_fr += "SHUTOFF) depuis " + str(updated_delta) + " jour" + updated_delta_s + '.'
                         
-                        sql = 'SELECT COUNT(id) AS nb FROM user_alerts WHERE status=1 AND message_en="%s";'
-                        self.db_cursor.execute(sql % (message_en,))
-                        if self.db_cursor.fetchone()[0] == 0:
-                            sql = 'INSERT INTO user_alerts(uuid, project, severity, message_fr, message_en, timestamp) VALUES("%s", "%s", "%d", "%s", "%s", "%s");'
-                            self.db_cursor.execute(sql % (instance.user_id, instance.tenant_id, SEVERITY_ALERT, message_fr, message_en, timestamp))
+                        # Update or keep unchanged existing alerts
+                        if matching_alert:
+                            if matching_alert[2] != message_en:
+                                self.log.debug("The instance %s has matching unread alert in database. Updating old messages..." % instance.id)
+                                sql = 'UPDATE user_alerts SET message_fr="%s", message_en="%s", timestamp="%s" WHERE id="%d";'
+                                self.db_cursor.execute(sql % (message_fr, message_en, timestamp, matching_alert[0]))
+                                continue
+
+                            self.log.debug("The instance %s has matching unread alert in database. Up to date" % instance.id)
+                            continue
+
+                        # Create new alert
+                        self.log.info("Create alert for instance %s (stopped since a while)" % instance.id)
+                        sql = 'INSERT INTO user_alerts(uuid, project, severity, message_fr, message_en, timestamp) VALUES("%s", "%s", "%d", "%s", "%s", "%s");'
+                        self.db_cursor.execute(sql % (instance.user_id, instance.tenant_id, SEVERITY_ALERT, message_fr, message_en, timestamp))
                 
                 elif instance.status.upper() == "ACTIVE":
                     if updated_delta >= project_config.get_int('instances', 'running_alert_delay'):
                         self.log.debug("Found instance %s in ACTIVE status since a while" % instance.id)
 
+                        # Look for matching unread alert
+                        matching_alert = None
+                        regex = re.compile("^Instance %s ([\(])?.*[\)\s]?created on [0-9]{2}/[0-9]{2}/[0-9]{4} \([0-9]+ day[s]? ago\) running \(ACTIVE\) since a long time \([0-9]+ day[s]?\)\.$" % instance.id)
+                        
+                        for alert in unread_alerts:
+                            (id, user_id, message_en) = alert
+                            if regex.match(message_en) and user_id == instance.user_id:
+                                matching_alert = alert
+                                break
+                            
+                        # Define alert messages
                         message_en = "Instance " + instance.id
                         if instance.name:
                             message_en += " (" + instance.name + ")"
                         message_en += " created on " + created_at.strftime("%d/%m/%Y") + " (" + str(created_delta) + " day" + created_delta_s + " ago) running ("
-                        message_en += instance.status.upper() + ") since a long time (" + str(updated_delta) + " day" + updated_delta_s + ")."
+                        message_en += "ACTIVE) since a long time (" + str(updated_delta) + " day" + updated_delta_s + ")."
 
                         message_fr = "Instance " + instance.id
                         if instance.name:
                             message_fr += " (" + instance.name + ")"
                         message_fr += u" créée le " + created_at.strftime("%d/%m/%Y") + " (il y a " + str(created_delta) + " jour" + created_delta_s + u") allumée ("
-                        message_fr += instance.status.upper() + ") depuis longtemps (" + str(updated_delta) + " jour" + updated_delta_s + ")."
-                        
-                        sql = 'SELECT COUNT(id) AS nb FROM user_alerts WHERE status=1 AND message_en="%s";'
-                        self.db_cursor.execute(sql % (message_en,))
-                        if self.db_cursor.fetchone()[0] == 0:
-                            sql = 'INSERT INTO user_alerts(uuid, project, severity, message_fr, message_en, timestamp) VALUES("%s", "%s", "%d", "%s", "%s", "%s");'
-                            self.db_cursor.execute(sql % (instance.user_id, instance.tenant_id, SEVERITY_INFO, message_fr, message_en, timestamp))
+                        message_fr += "ACTIVE) depuis longtemps (" + str(updated_delta) + " jour" + updated_delta_s + ")."
+
+                        # Update or keep unchanged existing alerts
+                        if matching_alert:
+                            if matching_alert[2] != message_en:
+                                self.log.debug("The instance %s has matching unread alert in database. Updating old messages..." % instance.id)
+                                sql = 'UPDATE user_alerts SET message_fr="%s", message_en="%s", timestamp="%s" WHERE id="%d";'
+                                self.db_cursor.execute(sql % (message_fr, message_en, timestamp, matching_alert[0]))
+                                continue
+
+                            self.log.debug("The instance %s has matching unread alert in database. Up to date" % instance.id)
+                            continue
+
+                        # Create new alert
+                        self.log.info("Create alert for instance %s (active since a while)" % instance.id)
+                        sql = 'INSERT INTO user_alerts(uuid, project, severity, message_fr, message_en, timestamp) VALUES("%s", "%s", "%d", "%s", "%s", "%s");'
+                        self.db_cursor.execute(sql % (instance.user_id, instance.tenant_id, SEVERITY_INFO, message_fr, message_en, timestamp))
 
             # Volumes
             self.log.debug("Begining of volumes monitoring...")
