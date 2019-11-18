@@ -1,5 +1,14 @@
 # Gerenuk changelog
 
+## What's new in version 1.3.X?
+
+Improvments:
+ - Detect and update existing unread alerts to avoid to spam users
+ 
+Fixes:
+ - TCP whitelist used in specific case instead of UDP whitelist
+
+
 ## What's new in version 1.2.X?
 
 New:
