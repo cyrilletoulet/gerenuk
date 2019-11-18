@@ -19,7 +19,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Thu 14 Nov 08:59:44 CET 2019
+# Mon 18 Nov 09:29:04 CET 2019
 
 NOVA_API_VERSION = 2
 CINDER_API_VERSION = 3
@@ -529,14 +529,28 @@ class OpenstackMonitor():
                     if sg["name"] == "default":
                         if rule['remote_ip_prefix'] and rule['protocol'] != "icmp":
                             self.log.debug("Found user defined rule in default security group")
+
+                            # Look for matching unread alert
+                            regex = re.compile("^User defined rules in default security group \(reminder\: it's forbidden\)\!$")
+                            for alert in unread_alerts:
+                                (id, user_id, message_en) = alert
+                                if regex.match(message_en):
+                                    matching_alert = alert
+                                    break
+                                
+                            # Define alert messages
                             message_en = "User defined rules in default security group (reminder: it's forbidden)!"
                             message_fr = u"Règles définies par des utilisateurs présentes dans le groupe de sécurité default (rappel: c'est interdit) !"
 
-                            sql = 'SELECT COUNT(id) AS nb FROM user_alerts WHERE status=1 AND message_en="%s";'
-                            self.db_cursor.execute(sql % (message_en,))
-                            if self.db_cursor.fetchone()[0] == 0:
-                                sql = 'INSERT INTO user_alerts(project, severity, message_fr, message_en, timestamp) VALUES("%s", "%d", "%s", "%s", "%s");'
-                                self.db_cursor.execute(sql % (rule["tenant_id"], SEVERITY_WARNING, message_fr, message_en, timestamp))
+                            # Update or keep unchanged existing alerts
+                            if matching_alert:
+                                self.log.debug("The default security group has matching unread alert in database. Up to date")
+                                continue
+
+                            # Create new alert
+                            self.log.info("Create alert for default security group (user defined rule)")
+                            sql = 'INSERT INTO user_alerts(project, severity, message_fr, message_en, timestamp) VALUES("%s", "%d", "%s", "%s", "%s");'
+                            self.db_cursor.execute(sql % (rule["tenant_id"], SEVERITY_WARNING, message_fr, message_en, timestamp))
                     
                     remote = IPNetwork(rule["remote_ip_prefix"])
                     if remote.is_private():
@@ -549,9 +563,10 @@ class OpenstackMonitor():
                     if whitelisted:
                         continue
 
+                    
                     if rule["remote_ip_prefix"] in ("0.0.0.0/0", "::/0"):
-                        self.log.debug("Found wide opened rule in security group %s" % sg['name'])
-                        
+                        self.log.debug("Found fully opened rule in security group %s" % sg['name'])
+
                         all_ports = False
                         ports = "Ports " + str(rule['port_range_min']) + ':' + str(rule['port_range_max'])
                         if rule['port_range_min'] == rule['port_range_max']:
@@ -560,6 +575,21 @@ class OpenstackMonitor():
                             else:
                                 ports = "Port " + str(rule['port_range_min'])
 
+                        # Look for matching unread alert
+                        matching_alert = None
+                        if all_ports:
+                            pattern = "^All ports \(%s\) open all over the Internet in security group .* \(%s\) since [0-9]+ day[s]?\!$" % (rule["protocol"], sg['id'])
+                        else:
+                            pattern = "^%s \(%s\) open all over the Internet in security group .* \(%s\) since [0-9]+ day[s]?\!$" % (ports, rule["protocol"], sg['id'])
+                        regex = re.compile(pattern)
+                        
+                        for alert in unread_alerts:
+                            (id, user_id, message_en) = alert
+                            if regex.match(message_en):
+                                matching_alert = alert
+                                break
+                            
+                        # Define alert messages
                         message_en = ports
                         if all_ports:
                             message_en = "All ports"
@@ -572,22 +602,35 @@ class OpenstackMonitor():
                         message_fr += " (" + rule["protocol"] + u") ouverts à l'ensemble d'Internet dans le groupe de sécurité "
                         message_fr += sg['name'] + " (" + sg['id'] + ") depuis " + str(created_delta) + " jour" + created_delta_s + '!'
 
-                        sql = 'SELECT COUNT(id) AS nb FROM user_alerts WHERE status=1 AND message_en="%s";'
-                        self.db_cursor.execute(sql % (message_en,))
-                        if self.db_cursor.fetchone()[0] == 0:
-                            sql = 'INSERT INTO user_alerts(project, severity, message_fr, message_en, timestamp) VALUES("%s", "%d", "%s", "%s", "%s");'
-                            self.db_cursor.execute(sql % (rule["tenant_id"], SEVERITY_CRITICAL, message_fr, message_en, timestamp))
+                        # Update or keep unchanged existing alerts
+                        if matching_alert:
+                            if matching_alert[2] != message_en:
+                                self.log.info("The security group %s has matching unread alert in database. Updating old messages..." % sg['id'])
+                                sql = 'UPDATE user_alerts SET message_fr="%s", message_en="%s", timestamp="%s" WHERE id="%d";'
+                                self.db_cursor.execute(sql % (message_fr, message_en, timestamp, matching_alert[0]))
+                                continue
+
+                            self.log.debug("The security group %s has matching unread alert in database. Up to date" % sg['id'])
+                            continue
+
+                        # Create new alert
+                        self.log.info("Create alert for security group %s (fully opened rule)" % sg['id'])
+                        sql = 'INSERT INTO user_alerts(project, severity, message_fr, message_en, timestamp) VALUES("%s", "%d", "%s", "%s", "%s");'
+                        self.db_cursor.execute(sql % (rule["tenant_id"], SEVERITY_CRITICAL, message_fr, message_en, timestamp))
+
 
                     elif rule['port_range_min'] == rule['port_range_max']:
                         if rule["protocol"] == "tcp":
                             if rule['port_range_min'] in tcp_whitelist:
                                 continue
                         elif rule["protocol"] == "udp":
-                            if rule['port_range_min'] in tcp_whitelist:
+                            if rule['port_range_min'] in udp_whitelist:
                                 continue
                         else:
                             continue
                             
+                        self.log.debug("Found wide opened rule in security group %s" % sg['name'])
+
                         all_ports = False
                         ports = "Ports " + str(rule['port_range_min']) + ':' + str(rule['port_range_max'])
                         if rule['port_range_min'] == rule['port_range_max']:
@@ -596,8 +639,21 @@ class OpenstackMonitor():
                             else:
                                 ports = "Port " + str(rule['port_range_min'])
 
-                        self.log.debug("Found wide opened rule in security group %s" % sg['name'])
-
+                        # Look for matching unread alert
+                        matching_alert = None
+                        if all_ports:
+                            pattern = "^All ports \(%s\) open to %s in security group .* \(%s\) since [0-9]+ day[s]?\.$" % (rule["protocol"], rule["remote_ip_prefix"], sg['id'])
+                        else:
+                            pattern = "^%s \(%s\) open to %s in security group .* \(%s\) since [0-9]+ day[s]?\.$" % (ports, rule["protocol"], rule["remote_ip_prefix"], sg['id'])
+                        regex = re.compile(pattern)
+                        
+                        for alert in unread_alerts:
+                            (id, user_id, message_en) = alert
+                            if regex.match(message_en):
+                                matching_alert = alert
+                                break
+                            
+                        # Define alert messages
                         message_en = ports
                         if all_ports:
                             message_en = "All ports"
@@ -610,12 +666,23 @@ class OpenstackMonitor():
                         message_fr += " (" + rule["protocol"] + u") ouverts à " + rule["remote_ip_prefix"] + u" dans le groupe de sécurité "
                         message_fr += sg['name'] + " (" + sg['id'] + ") depuis " + str(created_delta) + " jour" + created_delta_s + '.'
 
-                        sql = 'SELECT COUNT(id) AS nb FROM user_alerts WHERE status=1 AND message_en="%s";'
-                        self.db_cursor.execute(sql % (message_en,))
-                        if self.db_cursor.fetchone()[0] == 0:
-                            sql = 'INSERT INTO user_alerts(project, severity, message_fr, message_en, timestamp) VALUES("%s", "%d", "%s", "%s", "%s");'
-                            self.db_cursor.execute(sql % (rule["tenant_id"], SEVERITY_ALERT, message_fr, message_en, timestamp))
-                    
+                        # Update or keep unchanged existing alerts
+                        if matching_alert:
+                            if matching_alert[2] != message_en:
+                                self.log.info("The security group %s has matching unread alert in database. Updating old messages..." % sg['id'])
+                                sql = 'UPDATE user_alerts SET message_fr="%s", message_en="%s", timestamp="%s" WHERE id="%d";'
+                                self.db_cursor.execute(sql % (message_fr, message_en, timestamp, matching_alert[0]))
+                                continue
+
+                            self.log.debug("The security group %s has matching unread alert in database. Up to date" % sg['id'])
+                            continue
+
+                        # Create new alert
+                        self.log.info("Create alert for security group %s (wide opened rule)" % sg['id'])
+                        sql = 'INSERT INTO user_alerts(project, severity, message_fr, message_en, timestamp) VALUES("%s", "%d", "%s", "%s", "%s");'
+                        self.db_cursor.execute(sql % (rule["tenant_id"], SEVERITY_ALERT, message_fr, message_en, timestamp))
+
+                            
                     else:
                         counter = 0
                         if rule["protocol"] == "tcp":
@@ -631,6 +698,17 @@ class OpenstackMonitor():
 
                         self.log.debug("Found unknown opened rule in security group %s" % sg['name'])
 
+                        # Look for matching unread alert
+                        regex = re.compile("^[0-9]+ port[s]? in range %s:%s \(%s\) open to %s in security group .* \(%s\) since [0-9]+ day[s]?\.$" % (
+                            str(rule['port_range_min']), str(rule['port_range_max']), rule["protocol"], rule["remote_ip_prefix"], sg['id'])
+                        )
+                        for alert in unread_alerts:
+                            (id, user_id, message_en) = alert
+                            if regex.match(message_en):
+                                matching_alert = alert
+                                break
+
+                        # Define alert messages
                         ports_en = str(counter) + " port"
                         if counter > 1:
                             ports_en += 's'
@@ -645,11 +723,21 @@ class OpenstackMonitor():
                         message_fr = ports_fr + " (" + rule["protocol"] + u") ouverts à " + rule["remote_ip_prefix"] + u" dans le groupe de sécurité "
                         message_fr += sg['name'] + " (" + sg['id'] + ") depuis " + str(created_delta) + " jour" + created_delta_s + '.'
 
-                        sql = 'SELECT COUNT(id) AS nb FROM user_alerts WHERE status=1 AND message_en="%s";'
-                        self.db_cursor.execute(sql % (message_en,))
-                        if self.db_cursor.fetchone()[0] == 0:
-                            sql = 'INSERT INTO user_alerts(project, severity, message_fr, message_en, timestamp) VALUES("%s", "%d", "%s", "%s", "%s");'
-                            self.db_cursor.execute(sql % (rule["tenant_id"], SEVERITY_ALERT, message_fr, message_en, timestamp))
+                        # Update or keep unchanged existing alerts
+                        if matching_alert:
+                            if matching_alert[2] != message_en:
+                                self.log.info("The security group %s has matching unread alert in database. Updating old messages..." % sg['id'])
+                                sql = 'UPDATE user_alerts SET message_fr="%s", message_en="%s", timestamp="%s" WHERE id="%d";'
+                                self.db_cursor.execute(sql % (message_fr, message_en, timestamp, matching_alert[0]))
+                                continue
+
+                            self.log.debug("The security group %s has matching unread alert in database. Up to date" % sg['id'])
+                            continue
+
+                        # Create new alert
+                        self.log.info("Create alert for security group %s (unknown opened rule)" % sg['id'])
+                        sql = 'INSERT INTO user_alerts(project, severity, message_fr, message_en, timestamp) VALUES("%s", "%d", "%s", "%s", "%s");'
+                        self.db_cursor.execute(sql % (rule["tenant_id"], SEVERITY_ALERT, message_fr, message_en, timestamp))
 
             self.log.debug("Commiting requests to database...")
             self.database.commit()
