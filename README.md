@@ -46,6 +46,28 @@ mysql -u root -h $DB_HOST -p -e "GRANT SELECT, UPDATE ON gerenuk.* TO 'gerenuk_d
 ```
 Please replace *secret* by suitable passwords.
 
+
+Gerenul also needs to call OpenStack APIs, especially the Keystone and Nova ones.
+
+In **/etc/keystone/policy.json**, configure the following rules:
+```json
+    "project_manager": "role:project_manager",
+    "identity:get_user": "rule:admin_or_owner or rule:project_manager",
+```
+
+In **/etc/nova/policy.json**, configure the following rules:
+```json
+    "project_manager": "role:project_manager and project_id:%(project_id)s",
+    "default": "rule:admin_or_user or rule:project_manager",
+    "os_compute_api:os-hypervisors": "rule:default",
+```
+
+And restart the concerned APIs:
+```bash
+systemctl restart openstack-nova-api.service httpd.service
+```
+
+
 Install daemon:
 ```bash
 cp bin/gerenuk-openstackmon /usr/bin/
