@@ -1,6 +1,4 @@
 #!/usr/bin/python2
-# -*- coding: utf-8 -*-
-#
 #
 # This file is part of Gerenuk.
 #
@@ -19,7 +17,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Tue 14 Jan 12:52:19 CET 2020
+# Tue 14 Jan 15:01:31 CET 2020
 
 NOVA_API_VERSION = 2
 CINDER_API_VERSION = 3
@@ -256,7 +254,7 @@ class OpenstackMonitor():
 
                     # Create new alert
                     self.log.info("Create alert for instance %s (in error)" % instance.id)
-                    sql = 'INSERT INTO user_alerts(uuid, project, severity, message, timestamp) VALUES("%s", "%s", "%d", "%s", "%s", "%s");'
+                    sql = 'INSERT INTO user_alerts(uuid, project, severity, message, timestamp) VALUES("%s", "%s", "%d", "%s", "%s");'
                     self.db_cursor.execute(sql % (instance.user_id, instance.tenant_id, SEVERITY_WARNING, message, timestamp))
                 
                 elif instance.status.upper() == "SHUTOFF":
@@ -293,7 +291,7 @@ class OpenstackMonitor():
 
                         # Create new alert
                         self.log.info("Create alert for instance %s (stopped since a while)" % instance.id)
-                        sql = 'INSERT INTO user_alerts(uuid, project, severity, message, timestamp) VALUES("%s", "%s", "%d", "%s", "%s", "%s");'
+                        sql = 'INSERT INTO user_alerts(uuid, project, severity, message, timestamp) VALUES("%s", "%s", "%d", "%s", "%s");'
                         self.db_cursor.execute(sql % (instance.user_id, instance.tenant_id, SEVERITY_ALERT, message, timestamp))
                 
                 elif instance.status.upper() == "ACTIVE":
@@ -330,7 +328,7 @@ class OpenstackMonitor():
 
                         # Create new alert
                         self.log.info("Create alert for instance %s (active since a while)" % instance.id)
-                        sql = 'INSERT INTO user_alerts(uuid, project, severity, message, timestamp) VALUES("%s", "%s", "%d", "%s", "%s", "%s");'
+                        sql = 'INSERT INTO user_alerts(uuid, project, severity, message, timestamp) VALUES("%s", "%s", "%d", "%s", "%s");'
                         self.db_cursor.execute(sql % (instance.user_id, instance.tenant_id, SEVERITY_INFO, message, timestamp))
 
 
@@ -387,7 +385,7 @@ class OpenstackMonitor():
 
                     # Create new alert
                     self.log.info("Create alert for volume %s (in error)" % volume.id)
-                    sql = 'INSERT INTO user_alerts(uuid, project, severity, message, timestamp) VALUES("%s", "%s", "%d", "%s", "%s", "%s");'
+                    sql = 'INSERT INTO user_alerts(uuid, project, severity, message, timestamp) VALUES("%s", "%s", "%d", "%s", "%s");'
                     self.db_cursor.execute(sql % (volume.user_id, getattr(volume, "os-vol-tenant-attr:tenant_id"), SEVERITY_WARNING, message, timestamp))
 
                 elif volume.status.upper() == "AVAILABLE":
@@ -423,7 +421,7 @@ class OpenstackMonitor():
 
                             # Create new alert
                             self.log.info("Create alert for volume %s (probably orphan)" % volume.id)
-                            sql = 'INSERT INTO user_alerts(uuid, project, severity, message, timestamp) VALUES("%s", "%s", "%d", "%s", "%s", "%s");'
+                            sql = 'INSERT INTO user_alerts(uuid, project, severity, message, timestamp) VALUES("%s", "%s", "%d", "%s", "%s");'
                             self.db_cursor.execute(sql % (volume.user_id, getattr(volume, "os-vol-tenant-attr:tenant_id"), SEVERITY_ALERT, message, timestamp))
                             
                     else:
@@ -460,7 +458,7 @@ class OpenstackMonitor():
 
                             # Create new alert
                             self.log.info("Create alert for volume %s (inactive since a while)" % volume.id)
-                            sql = 'INSERT INTO user_alerts(uuid, project, severity, message, timestamp) VALUES("%s", "%s", "%d", "%s", "%s", "%s");'
+                            sql = 'INSERT INTO user_alerts(uuid, project, severity, message, timestamp) VALUES("%s", "%s", "%d", "%s", "%s");'
                             self.db_cursor.execute(sql % (volume.user_id, getattr(volume, "os-vol-tenant-attr:tenant_id"), SEVERITY_ALERT, message, timestamp))
 
 
@@ -514,7 +512,7 @@ class OpenstackMonitor():
 
                             # Create new alert
                             self.log.info("Create alert for default security group (user defined rule)")
-                            sql = 'INSERT INTO user_alerts(project, severity, message, timestamp) VALUES("%s", "%d", "%s", "%s", "%s");'
+                            sql = 'INSERT INTO user_alerts(project, severity, message, timestamp) VALUES("%s", "%d", "%s", "%s");'
                             self.db_cursor.execute(sql % (rule["tenant_id"], SEVERITY_WARNING, message, timestamp))
                     
                     remote = IPNetwork(rule["remote_ip_prefix"])
@@ -583,7 +581,7 @@ class OpenstackMonitor():
 
                         # Create new alert
                         self.log.info("Create alert for security group %s (fully opened rule)" % sg['id'])
-                        sql = 'INSERT INTO user_alerts(project, severity, message, timestamp) VALUES("%s", "%d", "%s", "%s", "%s");'
+                        sql = 'INSERT INTO user_alerts(project, severity, message, timestamp) VALUES("%s", "%d", "%s", "%s");'
                         self.db_cursor.execute(sql % (rule["tenant_id"], SEVERITY_CRITICAL, message, timestamp))
 
 
@@ -641,7 +639,7 @@ class OpenstackMonitor():
 
                         # Create new alert
                         self.log.info("Create alert for security group %s (wide opened rule)" % sg['id'])
-                        sql = 'INSERT INTO user_alerts(project, severity, message, timestamp) VALUES("%s", "%d", "%s", "%s", "%s");'
+                        sql = 'INSERT INTO user_alerts(project, severity, message, timestamp) VALUES("%s", "%d", "%s", "%s");'
                         self.db_cursor.execute(sql % (rule["tenant_id"], SEVERITY_ALERT, message, timestamp))
 
                             
@@ -691,7 +689,7 @@ class OpenstackMonitor():
 
                         # Create new alert
                         self.log.info("Create alert for security group %s (unknown opened rule)" % sg['id'])
-                        sql = 'INSERT INTO user_alerts(project, severity, message, timestamp) VALUES("%s", "%d", "%s", "%s", "%s");'
+                        sql = 'INSERT INTO user_alerts(project, severity, message, timestamp) VALUES("%s", "%d", "%s", "%s");'
                         self.db_cursor.execute(sql % (rule["tenant_id"], SEVERITY_ALERT, message, timestamp))
 
             self.log.debug("Commiting requests to database...")
