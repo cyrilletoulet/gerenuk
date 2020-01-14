@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Thu 20 Jun 13:50:56 CEST 2019
+# Tue 14 Jan 13:10:57 CET 2020
 
 import sys
 import getopt
@@ -121,12 +121,20 @@ if __name__ == "__main__":
         sql += "  project CHAR(37) NOT NULL,"
         sql += "  severity TINYINT NOT NULL DEFAULT 0,"
         sql += "  status TINYINT NOT NULL DEFAULT 1,"
-        sql += "  message_fr VARCHAR(511),"
-        sql += "  message_en VARCHAR(511) NOT NULL,"
+        sql += "  message VARCHAR(511) NOT NULL,"
         sql += "  timestamp DATETIME NOT NULL DEFAULT '0000-00-00 00:00:00'"
         sql += ");"
         db_cursor.execute(sql)
 
+        print " - v1.3.2 -> v1.3.3 migration..."
+        sql = "SELECT count(column_name) AS result FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = 'user_alerts' AND column_name = 'message_fr';"
+        db_cursor.execute(sql)
+        if db_cursor.fetchone()[0] == 1:
+            sql = "ALTER TABLE user_alerts DROP COLUMN message_fr;"
+            db_cursor.execute(sql)
+            sql = "ALTER TABLE user_alerts CHANGE message_en message VARCHAR(511) NOT NULL;"
+            db_cursor.execute(sql)
+        
         print
         print "Done!"
         
