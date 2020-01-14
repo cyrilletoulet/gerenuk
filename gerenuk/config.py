@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Thu 17 Oct 12:47:29 CEST 2019
+# Tue 14 Jan 09:56:42 CET 2020
 
 
 from . import BASE_PATH
@@ -92,6 +92,6 @@ class Config():
 
         :param section: (str) The section to looking in
         :param option: (str) The option to looking for
-        :return: (int) The configuration item if exists
+        :return: (list) The configuration item if exists
         """
         return ast.literal_eval(self.config.get(section, option))
