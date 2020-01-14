@@ -356,8 +356,7 @@ if __name__ == "__main__":
             print " - Severity: " + SEVERITY[alert["severity"]]
             print " - User: " + dest
             print " - Timestamp: " + str(alert["timestamp"])
-            print " - Message (en): " + alert["message_en"]
-            print " - Message (fr): " + alert["message_fr"]
+            print " - Message: " + alert["message"]
             print
 
         # Get unread alerts
@@ -384,8 +383,7 @@ if __name__ == "__main__":
             print " - Severity: " + SEVERITY[alert["severity"]]
             print " - User: " + dest
             print " - Timestamp: " + str(alert["timestamp"])
-            print " - Message (en): " + alert["message_en"]
-            print " - Message (fr): " + alert["message_fr"]
+            print " - Message: " + alert["message"]
             print
 
     except gerenuk.ConfigError, e:

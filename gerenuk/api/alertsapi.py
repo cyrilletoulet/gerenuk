@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Mon 24 Jun 07:58:13 CEST 2019
+# Tue 14 Jan 12:53:30 CET 2020
 
 import ConfigParser
 import datetime
@@ -66,7 +66,7 @@ class AlertsAPI():
         :return: (list) list of alerts dicts
                  
         """
-        sql = "SELECT id, uuid, project, severity, status, message_fr, message_en, timestamp FROM user_alerts WHERE project='%s' AND status='1';"
+        sql = "SELECT id, uuid, project, severity, status, message, timestamp FROM user_alerts WHERE project='%s' AND status='1';"
 
         self.db_cursor.execute(sql % (project_id,))
         rows = self.db_cursor.fetchall()
@@ -74,15 +74,14 @@ class AlertsAPI():
         alerts = list()
         
         for row in rows:
-            (id, uuid, project, severity, status, message_fr, message_en, timestamp) = row
+            (id, uuid, project, severity, status, message, timestamp) = row
             alert = {
                 "id": id,
                 "uuid": uuid,
                 "project": project,
                 "severity": severity,
                 "status": status,
-                "message_fr": message_fr,
-                "message_en": message_en,
+                "message": message,
                 "timestamp": timestamp
             }
             alerts.append(alert)
@@ -98,7 +97,7 @@ class AlertsAPI():
         :return: (list) list of alerts dicts
                  
         """
-        sql = "SELECT id, uuid, project, severity, status, message_fr, message_en, timestamp FROM user_alerts WHERE project='%s' AND status='0';"
+        sql = "SELECT id, uuid, project, severity, status, message, timestamp FROM user_alerts WHERE project='%s' AND status='0';"
 
         self.db_cursor.execute(sql % (project_id,))
         rows = self.db_cursor.fetchall()
@@ -106,15 +105,14 @@ class AlertsAPI():
         alerts = list()
         
         for row in rows:
-            (id, uuid, project, severity, status, message_fr, message_en, timestamp) = row
+            (id, uuid, project, severity, status, message, timestamp) = row
             alert = {
                 "id": id,
                 "uuid": uuid,
                 "project": project,
                 "severity": severity,
                 "status": status,
-                "message_fr": message_fr,
-                "message_en": message_en,
+                "message": message,
                 "timestamp": timestamp
             }
             alerts.append(alert)
