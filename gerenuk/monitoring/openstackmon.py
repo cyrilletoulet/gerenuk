@@ -19,7 +19,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Mon 18 Nov 09:29:04 CET 2019
+# Tue 14 Jan 10:34:19 CET 2020
 
 NOVA_API_VERSION = 2
 CINDER_API_VERSION = 3
@@ -573,6 +573,15 @@ class OpenstackMonitor():
                             if rule['port_range_min'] == None:
                                 all_ports = True
                             else:
+                                if rule["protocol"] == "tcp":
+                                    if rule['port_range_min'] in tcp_whitelist:
+                                        continue
+                                elif rule["protocol"] == "udp":
+                                    if rule['port_range_min'] in udp_whitelist:
+                                        continue
+                                else:
+                                    continue
+                                
                                 ports = "Port " + str(rule['port_range_min'])
 
                         # Look for matching unread alert
