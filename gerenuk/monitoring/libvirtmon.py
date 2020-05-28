@@ -421,7 +421,7 @@ class LibvirtMonitor():
                 self.log.debug("Found existing entry to update in database for instance %s" % uuid)
                 now = datetime.datetime.now()
 
-                sql = 'UPDATE instances_monitoring SET deleted="0", hypervisor="%s" last_update="%s", vcores="%d", vram="%d", '
+                sql = 'UPDATE instances_monitoring SET deleted="0", hypervisor="%s", last_update="%s", vcores="%d", vram="%d", '
                 sql += 'hourly_vcpu_usage="%s", hourly_cpu_usage="%s", hourly_mem_usage="%s", '
                 sql += 'daily_vcpu_usage="%s", daily_cpu_usage="%s", daily_mem_usage="%s", '
                 sql += 'weekly_vcpu_usage="%s", weekly_cpu_usage="%s", weekly_mem_usage="%s" '
@@ -436,6 +436,13 @@ class LibvirtMonitor():
                 self.db_cursor.execute(sql % values)
 
             else:
+                # Migration security
+                sql = "SELECT * FROM instances_monitoring WHERE uuid='%s'" % (uuid,)
+                self.db_cursor.execute(sql)
+                if len(self.db_cursor.fetchall() > 0):
+                    self.log.debug("Found existing entry for instance '%s' linked to other hypervisor. Probably being migrated..." % uuid)
+                    continue
+
                 # INSERT
                 self.log.debug("Creating new entry in database for instance %s" % uuid)
                 fields = ['uuid', 'hypervisor', 'vcores', 'vram']
