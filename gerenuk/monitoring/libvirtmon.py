@@ -439,8 +439,11 @@ class LibvirtMonitor():
                 # Migration security
                 sql = "SELECT * FROM instances_monitoring WHERE uuid='%s'" % (uuid,)
                 self.db_cursor.execute(sql)
-                if len(self.db_cursor.fetchall() > 0):
-                    self.log.debug("Found existing entry for instance '%s' linked to other hypervisor. Probably being migrated..." % uuid)
+                if len(self.db_cursor.fetchall()) > 0:
+                    self.log.debug("Found existing entry for instance %s linked to another hypervisor (probably being migrated)." % uuid)
+                    self.log.debug("Reloading existing stats from database...")
+                    self.load_stats()
+                    self.log.debug("Existing stats successfully reloaded")
                     continue
 
                 # INSERT
