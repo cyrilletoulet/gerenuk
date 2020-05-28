@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Fri 18 Oct 08:18:02 CEST 2019
+# Thu 28 May 11:15:41 CEST 2020
 
 import multiprocessing
 import ConfigParser
@@ -421,13 +421,13 @@ class LibvirtMonitor():
                 self.log.debug("Found existing entry to update in database for instance %s" % uuid)
                 now = datetime.datetime.now()
 
-                sql = 'UPDATE instances_monitoring SET deleted="0", last_update="%s", vcores="%d", vram="%d", '
+                sql = 'UPDATE instances_monitoring SET deleted="0", hypervisor="%s" last_update="%s", vcores="%d", vram="%d", '
                 sql += 'hourly_vcpu_usage="%s", hourly_cpu_usage="%s", hourly_mem_usage="%s", '
                 sql += 'daily_vcpu_usage="%s", daily_cpu_usage="%s", daily_mem_usage="%s", '
                 sql += 'weekly_vcpu_usage="%s", weekly_cpu_usage="%s", weekly_mem_usage="%s" '
                 sql += 'WHERE uuid="%s";'
 
-                values = (now, self.monitoring[uuid]["info"]["vcores"], self.monitoring[uuid]["info"]["vram"])
+                values = (self.hypervisor["hostname"], now, self.monitoring[uuid]["info"]["vcores"], self.monitoring[uuid]["info"]["vram"])
                 for period in ["hourly", "daily", "weekly"]:
                     for metric in ["vcpu", "cpu", "mem"]:
                         values += (','.join(str("%.1f" % d) for d in self.monitoring[uuid][period][metric]),)
