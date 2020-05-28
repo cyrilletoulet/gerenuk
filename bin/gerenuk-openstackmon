@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Thu 17 Oct 13:41:16 CEST 2019
+# Thu 28 May 16:47:59 CEST 2020
 
 import os
 import sys
@@ -146,6 +146,7 @@ if __name__ == "__main__":
 
     except gerenuk.MonitoringError, e:
         log.error("Monitoring error: %s" % str(e))
+        log.error(traceback.format_exc())
         sys.exit(1)
 
     except Exception, e:
