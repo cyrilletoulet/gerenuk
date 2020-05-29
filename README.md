@@ -262,10 +262,10 @@ running_alert_delay = 7
 # For example ["7caab7bc-310a-4abf-bdba-222f3adcd35b", "..."]
 whitelist = []
 
-# The maximum number of instances per user
+# The maximum number of instances allowed per user
 max_instances_per_user = 10
 
-# The maximum number of vcpus per user
+# The maximum number of vcpus allowed per user
 max_vcpus_per_user = 48
 
 
@@ -277,8 +277,14 @@ orphan_alert_delay = 1
 inactive_alert_delay = 7
 
 # The volumes whitelist.
-whitelist = []
 # For example ["bbd77d18-2ca9-4dbf-b9f5-01b8675dd983", "..."]
+whitelist = []
+
+# The maximum number of volumes allowed per user
+max_volumes_per_user = 10
+
+# The maximum storage (in BG) allowed per user
+max_storage_per_user = 1024
 ```
 
 

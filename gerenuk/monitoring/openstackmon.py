@@ -199,10 +199,10 @@ class OpenstackMonitor():
             unread_alerts = self.db_cursor.fetchall()
 
             # Instances
-            self.monitor_instances(project_config, unread_alerts, nova)
+            self.monitor_instances(project_config, unread_alerts, project_id, nova)
 
             # Volumes
-            self.monitor_volumes(project_config, unread_alerts, cinder)
+            self.monitor_volumes(project_config, unread_alerts, project_id, cinder)
 
             # Networks
             self.monitor_security_groups(project_config, unread_alerts, project_id, neutron)
@@ -217,17 +217,17 @@ class OpenstackMonitor():
 
 
 
-    def monitor_instances(self, project_config, unread_alerts, nova):
+    def monitor_instances(self, project_config, unread_alerts, project_id, nova):
         """
         Monitor instances of an openstack project
 
         :param project_config: (gerenuk.Config) The project configuration
         :param unread_alerts: (list) The unread alerts
+        :param project_id: (str) The ID of monitored project
         :param nova: (novaclient.client) The nova client
         """
         now = datetime.date.today()
         timestamp = datetime.datetime.now()
-        project_id = ""
         instances_per_user = dict()
         vcpus_per_user = dict()
         flavors = dict()
@@ -238,14 +238,6 @@ class OpenstackMonitor():
         
         self.log.debug("Begining of instances monitoring...")
         for instance in nova.servers.list():
-            # Filter
-            whitelist = project_config.get_list('instances', 'whitelist')
-            if instance.id in whitelist:
-                continue
-
-            # Project ID used for alerts
-            project_id = instance.tenant_id
-            
             date_format = "%Y-%m-%dT%H:%M:%SZ"
             created_at = datetime.datetime.strptime(instance.created, date_format)
             updated_at = datetime.datetime.strptime(instance.updated, date_format)
@@ -268,6 +260,11 @@ class OpenstackMonitor():
             if not instance.user_id in vcpus_per_user:
                 vcpus_per_user[instance.user_id] = 0
             vcpus_per_user[instance.user_id] += flavors[instance.flavor["id"]]
+
+            # Filter
+            whitelist = project_config.get_list('instances', 'whitelist')
+            if instance.id in whitelist:
+                continue
 
             # Instances in error status
             if instance.status.upper() == "ERROR":
@@ -395,7 +392,7 @@ class OpenstackMonitor():
                         
                 for alert in unread_alerts:
                     (id, user_id, message) = alert
-                    if regex.match(message) and user_id == instance.user_id:
+                    if regex.match(message) and user_id == user:
                         matching_alert = alert
                         break
                             
@@ -429,7 +426,7 @@ class OpenstackMonitor():
                         
                 for alert in unread_alerts:
                     (id, user_id, message) = alert
-                    if regex.match(message) and user_id == instance.user_id:
+                    if regex.match(message) and user_id == user:
                         matching_alert = alert
                         break
                             
@@ -454,19 +451,33 @@ class OpenstackMonitor():
 
 
 
-    def monitor_volumes(self, project_config, unread_alerts, cinder):
+    def monitor_volumes(self, project_config, unread_alerts, project_id, cinder):
         """
         Monitor volumes of an openstack project
 
         :param project_config: (gerenuk.Config) The project configuration
         :param unread_alerts: (list) The unread alerts
+        :param project_id: (str) The ID of monitored project
         :param cinder: (cinderclient.client) The cinder client
         """
         now = datetime.date.today()
         timestamp = datetime.datetime.now()
-        
+        volumes_per_user = dict()
+        storage_per_user = dict()
+
         self.log.debug("Begining of volumes monitoring...")
         for volume in cinder.volumes.list():
+            # Count volumes
+            if not volume.user_id in volumes_per_user:
+                volumes_per_user[volume.user_id] = 0
+            volumes_per_user[volume.user_id] += 1
+
+            # Count 
+            if not volume.user_id in storage_per_user:
+                storage_per_user[volume.user_id] = 0
+            storage_per_user[volume.user_id] += volume.size
+
+            # Filter
             whitelist = project_config.get_list('volumes', 'whitelist')
             if volume.id in whitelist:
                 continue
@@ -594,6 +605,74 @@ class OpenstackMonitor():
                         sql = 'INSERT INTO user_alerts(uuid, project, severity, message, timestamp) VALUES("%s", "%s", "%d", "%s", "%s");'
                         self.db_cursor.execute(sql % (volume.user_id, getattr(volume, "os-vol-tenant-attr:tenant_id"), SEVERITY_ALERT, message, timestamp))
 
+        # Volumes per user
+        for user in volumes_per_user:
+            if volumes_per_user[user] > project_config.get_int('volumes', 'max_volumes_per_user'):
+                self.log.debug("Max volumes number reach for user %s" % user)
+
+                # Look for matching unread alert
+                matching_alert = None
+                regex = re.compile("^Too many volumes \([0-9]+\) created by user %s\.$" % user)
+                        
+                for alert in unread_alerts:
+                    (id, user_id, message) = alert
+                    if regex.match(message) and user_id == user:
+                        matching_alert = alert
+                        break
+                            
+                # Define alert message
+                message = "Too many volumes (" + str(volumes_per_user[user]) + ") created by user %s." % user
+
+                # Update or keep unchanged existing alerts
+                if matching_alert:
+                    if matching_alert[2] != message:
+                        self.log.info("The user %s has matching unread alert in database. Updating old messages..." % user)
+                        sql = 'UPDATE user_alerts SET message="%s", timestamp="%s" WHERE id="%d";'
+                        self.db_cursor.execute(sql % (message, timestamp, matching_alert[0]))
+                        continue
+
+                    self.log.debug("The user %s has matching unread alert in database. Up to date" % user)
+                    continue
+
+                # Create new alert
+                self.log.info("Create alert for user %s (too many volumes)" % user)
+                sql = 'INSERT INTO user_alerts(uuid, project, severity, message, timestamp) VALUES("%s", "%s", "%d", "%s", "%s");'
+                self.db_cursor.execute(sql % (user, project_id, SEVERITY_WARNING, message, timestamp))
+
+        # Storage per user
+        for user in storage_per_user:
+            if storage_per_user[user] > project_config.get_int('volumes', 'max_storage_per_user'):
+                self.log.debug("Max storage number reach for user %s" % user)
+
+                # Look for matching unread alert
+                matching_alert = None
+                regex = re.compile("^Too much storage \([0-9]+GB\) for user %s\.$" % user)
+                        
+                for alert in unread_alerts:
+                    (id, user_id, message) = alert
+                    if regex.match(message) and user_id == user:
+                        matching_alert = alert
+                        break
+                            
+                # Define alert message
+                message = "Too much storage (" + str(storage_per_user[user]) + "GB) for user %s." % user
+
+                # Update or keep unchanged existing alerts
+                if matching_alert:
+                    if matching_alert[2] != message:
+                        self.log.info("The user %s has matching unread alert in database. Updating old messages..." % user)
+                        sql = 'UPDATE user_alerts SET message="%s", timestamp="%s" WHERE id="%d";'
+                        self.db_cursor.execute(sql % (message, timestamp, matching_alert[0]))
+                        continue
+
+                    self.log.debug("The user %s has matching unread alert in database. Up to date" % user)
+                    continue
+
+                # Create new alert
+                self.log.info("Create alert for user %s (too much storage)" % user)
+                sql = 'INSERT INTO user_alerts(uuid, project, severity, message, timestamp) VALUES("%s", "%s", "%d", "%s", "%s");'
+                self.db_cursor.execute(sql % (user, project_id, SEVERITY_WARNING, message, timestamp))
+
 
 
     def monitor_security_groups(self, project_config, unread_alerts, project_id, neutron):
@@ -602,7 +681,7 @@ class OpenstackMonitor():
 
         :param project_config: (gerenuk.Config) The project configuration
         :param unread_alerts: (list) The unread alerts
-        :param projct_id: (str) The ID of monitored project
+        :param project_id: (str) The ID of monitored project
         :param neutron: (neutronclient.v2_0.client) The neutron client
         """
         now = datetime.date.today()
