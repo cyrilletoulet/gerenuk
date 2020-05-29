@@ -1,5 +1,14 @@
 # Gerenuk changelog
 
+## What's new in version 1.4.X?
+
+New:
+ - Add an option to allow ICMP rules in default security groups
+ 
+Fixes:
+ - Fix the instance migration issue in gerenuk-libvirtmon service
+
+
 ## What's new in version 1.3.X?
 
 Improvments:

@@ -17,7 +17,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Thu 28 May 16:43:48 CEST 2020
+# Fri 29 May 11:29:46 CEST 2020
 
 NOVA_API_VERSION = 2
 CINDER_API_VERSION = 3
@@ -516,13 +516,14 @@ class OpenstackMonitor():
         timestamp = datetime.datetime.now()
         
         self.log.debug("Begining of security groupes monitoring...")
-        for sg in neutron.list_security_groups()['security_groups']:
+        for sg in neutron.list_security_groups()["security_groups"]:
             if sg["project_id"] != project_id:
                 continue
                 
-            trusted_subnets = project_config.get_list('networks', 'trusted_subnets')
-            tcp_whitelist = project_config.get_list('networks', 'tcp_whitelist')
-            udp_whitelist = project_config.get_list('networks', 'udp_whitelist')
+            trusted_subnets = project_config.get_list("networks", "trusted_subnets")
+            tcp_whitelist = project_config.get_list("networks", "tcp_whitelist")
+            udp_whitelist = project_config.get_list("networks", "udp_whitelist")
+            allow_icmp_in_default_sg = project_config.get_bool("networks", "allow_icmp_in_default_sg")
 
             if not("security_group_rules" in sg):
                 continue
@@ -546,7 +547,11 @@ class OpenstackMonitor():
 
                 # Default security group
                 if sg["name"] == "default":
-                    if rule['remote_ip_prefix'] and rule['protocol'] != "icmp":
+                    if rule['remote_ip_prefix']:
+                        # Filter
+                        if allow_icmp_in_default_sg and rule['protocol'] == "icmp":
+                            continue
+                        
                         self.log.debug("Found user defined rule in default security group")
 
                         # Look for matching unread alert
@@ -588,6 +593,10 @@ class OpenstackMonitor():
                 
                 # Wildcards
                 if rule["remote_ip_prefix"] in ("0.0.0.0/0", "::/0"):
+                    # Filter
+                    if allow_icmp_in_default_sg and rule['protocol'] == "icmp":
+                        continue
+                    
                     self.log.debug("Found fully opened rule in security group %s" % sg['name'])
 
                     all_ports = False

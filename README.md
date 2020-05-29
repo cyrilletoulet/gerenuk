@@ -247,6 +247,9 @@ tcp_whitelist = []
 # The trusted UDP ports.
 udp_whitelist = []
 
+# Allow ICMP rules in default security group
+allow_icmp_in_default_sg = true
+
 
 [instances]
 # Time (in days) before a stopped instance is in alert.
