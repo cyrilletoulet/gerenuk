@@ -4,7 +4,9 @@
 
 New:
  - Add an option to allow ICMP rules in default security groups
- 
+ - Alerts for max instances per user in project
+ - Alerts for max vCPUs per user in project
+
 Fixes:
  - Fix the instance migration issue in gerenuk-libvirtmon service
 

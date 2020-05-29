@@ -262,6 +262,12 @@ running_alert_delay = 7
 # For example ["7caab7bc-310a-4abf-bdba-222f3adcd35b", "..."]
 whitelist = []
 
+# The maximum number of instances per user
+max_instances_per_user = 10
+
+# The maximum number of vcpus per user
+max_vcpus_per_user = 48
+
 
 [volumes]
 # Time (in days) before an orphan volume is in alert.

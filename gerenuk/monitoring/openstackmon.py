@@ -227,13 +227,25 @@ class OpenstackMonitor():
         """
         now = datetime.date.today()
         timestamp = datetime.datetime.now()
+        project_id = ""
+        instances_per_user = dict()
+        vcpus_per_user = dict()
+        flavors = dict()
+        
+        self.log.debug("Getting flavor list...")
+        for flavor in nova.flavors.list():
+            flavors[flavor.id] = flavor.vcpus
         
         self.log.debug("Begining of instances monitoring...")
         for instance in nova.servers.list():
+            # Filter
             whitelist = project_config.get_list('instances', 'whitelist')
             if instance.id in whitelist:
                 continue
-                
+
+            # Project ID used for alerts
+            project_id = instance.tenant_id
+            
             date_format = "%Y-%m-%dT%H:%M:%SZ"
             created_at = datetime.datetime.strptime(instance.created, date_format)
             updated_at = datetime.datetime.strptime(instance.updated, date_format)
@@ -247,6 +259,17 @@ class OpenstackMonitor():
             if updated_delta < 2:
                 updated_delta_s = ''
 
+            # Count instances
+            if not instance.user_id in instances_per_user:
+                instances_per_user[instance.user_id] = 0
+            instances_per_user[instance.user_id] += 1
+
+            # Count vcpus
+            if not instance.user_id in vcpus_per_user:
+                vcpus_per_user[instance.user_id] = 0
+            vcpus_per_user[instance.user_id] += flavors[instance.flavor["id"]]
+
+            # Instances in error status
             if instance.status.upper() == "ERROR":
                 self.log.debug("Found instance %s in ERROR status" % instance.id)
 
@@ -284,6 +307,7 @@ class OpenstackMonitor():
                 self.db_cursor.execute(sql % (instance.user_id, instance.tenant_id, SEVERITY_WARNING, message, timestamp))
 
                 
+            # Instances in stopped status
             elif instance.status.upper() == "SHUTOFF":
                 if updated_delta >= project_config.get_int('instances', 'stopped_alert_delay'):
                     self.log.debug("Found instance %s in SHUTOFF status since a while" % instance.id)
@@ -322,6 +346,7 @@ class OpenstackMonitor():
                     self.db_cursor.execute(sql % (instance.user_id, instance.tenant_id, SEVERITY_ALERT, message, timestamp))
 
                     
+            # Instances in running status
             elif instance.status.upper() == "ACTIVE":
                 if updated_delta >= project_config.get_int('instances', 'running_alert_delay'):
                     self.log.debug("Found instance %s in ACTIVE status since a while" % instance.id)
@@ -358,6 +383,74 @@ class OpenstackMonitor():
                     self.log.info("Create alert for instance %s (active since a while)" % instance.id)
                     sql = 'INSERT INTO user_alerts(uuid, project, severity, message, timestamp) VALUES("%s", "%s", "%d", "%s", "%s");'
                     self.db_cursor.execute(sql % (instance.user_id, instance.tenant_id, SEVERITY_INFO, message, timestamp))
+
+        # Instances per user
+        for user in instances_per_user:
+            if instances_per_user[user] > project_config.get_int('instances', 'max_instances_per_user'):
+                self.log.debug("Max instances number reach for user %s" % user)
+
+                # Look for matching unread alert
+                matching_alert = None
+                regex = re.compile("^Too many instances \([0-9]+\) launched by user %s\.$" % user)
+                        
+                for alert in unread_alerts:
+                    (id, user_id, message) = alert
+                    if regex.match(message) and user_id == instance.user_id:
+                        matching_alert = alert
+                        break
+                            
+                # Define alert message
+                message = "Too many instances (" + str(instances_per_user[user]) + ") launched by user %s." % user
+
+                # Update or keep unchanged existing alerts
+                if matching_alert:
+                    if matching_alert[2] != message:
+                        self.log.info("The user %s has matching unread alert in database. Updating old messages..." % user)
+                        sql = 'UPDATE user_alerts SET message="%s", timestamp="%s" WHERE id="%d";'
+                        self.db_cursor.execute(sql % (message, timestamp, matching_alert[0]))
+                        continue
+
+                    self.log.debug("The user %s has matching unread alert in database. Up to date" % user)
+                    continue
+
+                # Create new alert
+                self.log.info("Create alert for user %s (too many instances)" % user)
+                sql = 'INSERT INTO user_alerts(uuid, project, severity, message, timestamp) VALUES("%s", "%s", "%d", "%s", "%s");'
+                self.db_cursor.execute(sql % (user, project_id, SEVERITY_WARNING, message, timestamp))
+
+        # vCPUs per user
+        for user in vcpus_per_user:
+            if vcpus_per_user[user] > project_config.get_int('instances', 'max_vcpus_per_user'):
+                self.log.debug("Max vcpus number reach for user %s" % user)
+
+                # Look for matching unread alert
+                matching_alert = None
+                regex = re.compile("^Too many vCPUs \([0-9]+\) for user %s\.$" % user)
+                        
+                for alert in unread_alerts:
+                    (id, user_id, message) = alert
+                    if regex.match(message) and user_id == instance.user_id:
+                        matching_alert = alert
+                        break
+                            
+                # Define alert message
+                message = "Too many vCPUs (" + str(vcpus_per_user[user]) + ") for user %s." % user
+
+                # Update or keep unchanged existing alerts
+                if matching_alert:
+                    if matching_alert[2] != message:
+                        self.log.info("The user %s has matching unread alert in database. Updating old messages..." % user)
+                        sql = 'UPDATE user_alerts SET message="%s", timestamp="%s" WHERE id="%d";'
+                        self.db_cursor.execute(sql % (message, timestamp, matching_alert[0]))
+                        continue
+
+                    self.log.debug("The user %s has matching unread alert in database. Up to date" % user)
+                    continue
+
+                # Create new alert
+                self.log.info("Create alert for user %s (too many vCPUs)" % user)
+                sql = 'INSERT INTO user_alerts(uuid, project, severity, message, timestamp) VALUES("%s", "%s", "%d", "%s", "%s");'
+                self.db_cursor.execute(sql % (user, project_id, SEVERITY_WARNING, message, timestamp))
 
 
 
@@ -555,6 +648,7 @@ class OpenstackMonitor():
                         self.log.debug("Found user defined rule in default security group")
 
                         # Look for matching unread alert
+                        matching_alert = None
                         regex = re.compile("^User defined rules in default security group \(reminder\: it's forbidden\)\!$")
                         for alert in unread_alerts:
                             (id, user_id, message) = alert
