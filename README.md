@@ -145,148 +145,16 @@ chmod -R 600 /etc/gerenuk/gerenuk.conf
 chmod -R 600 /etc/gerenuk/project.d/*
 ```
 
+### The main configuration reference
 
-### Main configuration reference
-The main configuration reference:
-```ini
-[database]
-# The database hostname or IP address.
-db_host = database.mydomain
-
-# The database name.
-db_name = gerenuk
-
-# The database user.
-db_user = gerenuk
-
-# The password corresponding to database user.
-db_pass = *secret*
-
-# The database connection timeout in seconds.
-db_timeout = 900
-
-# The maximum connection retries.
-max_conn_retries = 5
-
-# The time to wait before attempt a connection retry in seconds.
-wait_before_conn_retry = 3
-
-
-[libvirt]
-# The file used by libvirt monitoring daemon to save pid.
-# Warning: this file has to be writable and readable by daemon user.
-pid_file = /var/run/gerenuk-libvirtmon.pid
-
-# The file used for logging.
-log_file = /var/log/gerenuk-libvirtmon.log
-
-# The log level (CRITICAL, ERROR, WARNING, INFO, DEBUG).
-log_level = ERROR
-
-# The instances monitoring frequency (in seconds).
-monitoring_frequency = 300
-
-# The monitoring sampling duration (in seconds).
-sampling_time = 3
-
-
-[openstack]
-# The file used by libvirt monitoring daemon to save pid.
-# Warning: this file has to be writable and readable by daemon user.
-pid_file = /var/run/gerenuk-openstackmon.pid
-
-# The file used for logging.
-log_file = /var/log/gerenuk-libvirtmon.log
-
-# The log level (CRITICAL, ERROR, WARNING, INFO, DEBUG).
-log_level = ERROR
-
-# The project config directory
-projects_dir = /etc/gerenuk/project.d/
-
-# The openstack monitoring frequency (in seconds).
-monitoring_frequency = 3600
-```
-
+For the main configuration reference, see **doc/gerenuk.conf**.
 
 ### OpenStack project configuration reference
 
 To monitor an OpenStack project, create a specific configuration file in /etc/gerenuk/project.d.
 For more consistency, you can name your configuration files following the convention *domain.project.conf*.
 
-The project specific configuration reference:
-```ini
-[keystone_authtoken]
-# The complete public Identity API endpoint.
-auth_url = https://controller:5000/v3
-
-# The domain name containing project.
-project_domain_name = default
-
-# The domain name containing user.
-user_domain_name = default
-
-# The project domain name to scope to.
-project_name = admin
-
-# The username.
-username = gerenuk
-
-# The user's password.
-password = *secret*
-
-
-[networks]
-# The trusted public subnets.
-# For exemple ["194.214.0.0/16", "134.206.0.0/16"]
-trusted_subnets = []
-
-# The trusted TCP ports.
-tcp_whitelist = []
-
-# The trusted UDP ports.
-udp_whitelist = []
-
-# Allow ICMP rules in default security group
-allow_icmp_in_default_sg = true
-
-
-[instances]
-# Time (in days) before a stopped instance is in alert.
-stopped_alert_delay = 1
-
-# Time (in days) before a running instance is in alert.
-running_alert_delay = 7
-
-# The instances whitelist.
-# For example ["7caab7bc-310a-4abf-bdba-222f3adcd35b", "..."]
-whitelist = []
-
-# The maximum number of instances allowed per user
-max_instances_per_user = 10
-
-# The maximum number of vcpus allowed per user
-max_vcpus_per_user = 48
-
-
-[volumes]
-# Time (in days) before an orphan volume is in alert.
-orphan_alert_delay = 1
-
-# Time (in days) before an inactive volume is in alert.
-inactive_alert_delay = 7
-
-# The volumes whitelist.
-# For example ["bbd77d18-2ca9-4dbf-b9f5-01b8675dd983", "..."]
-whitelist = []
-
-# The maximum number of volumes allowed per user
-max_volumes_per_user = 10
-
-# The maximum storage (in BG) allowed per user
-max_storage_per_user = 1024
-```
-
+For the project specific configuration reference, see **doc/project.d/project-sample.conf**.
 
 
 
