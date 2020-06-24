@@ -68,20 +68,22 @@ systemctl restart openstack-nova-api.service httpd.service
 ```
 
 
-Install daemon:
+Install daemons:
 ```bash
 cp bin/gerenuk-openstackmon /usr/bin/
 cp systemd/gerenuk-openstackmon.service /usr/lib/systemd/system/
+cp bin/gerenuk-cleaner /usr/bin/
+cp systemd/gerenuk-cleaner.service systemd/gerenuk-cleaner.timer /usr/lib/systemd/system/
 systemctl daemon-reload
 ```
 
-Finally, start the service:
+Finally, start the services:
 ```bash
-systemctl start gerenuk-openstackmon.service
-systemctl enable gerenuk-openstackmon.service
+systemctl start gerenuk-openstackmon.service gerenuk-cleaner.timer
+systemctl enable gerenuk-openstackmon.service gerenuk-cleaner.timer
 ```
 
-Logs are stored in **/var/log/gerenuk-openstackmon.log**.
+Logs are stored in **/var/log/gerenuk-openstackmon.log** and **/var/log/gerenuk-cleaner.log**.
 
 
 

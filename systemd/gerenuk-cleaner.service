@@ -1,0 +1,8 @@
+[Unit]
+Description=Gerenuk cleaner service
+After=network.target
+ConditionPathExists=/usr/bin/gerenuk-cleaner
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/gerenuk-cleaner -c /etc/gerenuk/gerenuk.conf

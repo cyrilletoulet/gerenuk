@@ -20,6 +20,14 @@
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
 # Wed 24 Jun 10:36:23 CEST 2020
 
+import sys
+import getopt
+import logging
+import gerenuk
+import traceback
+import gerenuk.monitoring
+
+
 def help():
     print "Help"
     print "===="
@@ -86,7 +94,8 @@ if __name__ == "__main__":
         log.addHandler(stderr_handler)
 
         # Run task
-        # TODO
+        openstack_mon = gerenuk.monitoring.OpenstackMonitor(config)
+        openstack_mon.clean_read_alerts()
 
     # Errors
     except gerenuk.ConfigError, e:

@@ -935,3 +935,31 @@ class OpenstackMonitor():
                     self.log.info("Create alert for security group %s (unknown opened rule)" % sg['id'])
                     sql = 'INSERT INTO user_alerts(project, severity, message, timestamp) VALUES("%s", "%d", "%s", "%s");'
                     self.db_cursor.execute(sql % (rule["tenant_id"], SEVERITY_ALERT, message, timestamp))
+
+
+
+    def clean_read_alerts(self):
+        """
+        Clean read alerts
+        """
+        enabled = self.config.get_bool("cleaner", "clean_read_alerts")
+
+        if not(enabled):
+            self.log.info("clean_read_alerts option disabled by configuration")
+            return
+
+        lifespan = self.config.get_int("cleaner", "read_alerts_lifespan")
+        timestamp = datetime.datetime.now() - datetime.timedelta(days=lifespan)
+
+        self.log.debug("Deleting read alerts older than %d days..." % (lifespan,))
+        sql = 'DELETE FROM user_alerts WHERE status=0 AND timestamp<="%s";'
+        self.db_cursor.execute(sql % (timestamp,))
+        deleted = self.db_cursor.rowcount
+        self.log.info("%d alert(s) cleaned" % (deleted,))
+        
+        # Commit
+        self.log.debug("Commiting requests to database...")
+        self.database.commit()
+        self.log.debug("Database requests successfully commited")
+
+        print(deleted)
