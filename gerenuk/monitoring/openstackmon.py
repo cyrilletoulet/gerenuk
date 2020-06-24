@@ -17,7 +17,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Fri 29 May 11:29:46 CEST 2020
+# Wed 24 Jun 15:02:35 CEST 2020
 
 NOVA_API_VERSION = 2
 CINDER_API_VERSION = 3
@@ -245,6 +245,7 @@ class OpenstackMonitor():
             updated_delta = (now - updated_at.date()).days
 
             created_delta_s = 's'
+            updated_delta_s = ''
             if created_delta < 2:
                 created_delta_s = ''
                 updated_delta_s = 's'
@@ -259,7 +260,8 @@ class OpenstackMonitor():
             # Count vcpus
             if not instance.user_id in vcpus_per_user:
                 vcpus_per_user[instance.user_id] = 0
-            vcpus_per_user[instance.user_id] += flavors[instance.flavor["id"]]
+            if instance.flavor["id"] in flavors:
+                vcpus_per_user[instance.user_id] += flavors[instance.flavor["id"]]
 
             # Filter
             whitelist = project_config.get_list('instances', 'whitelist')
@@ -938,28 +940,30 @@ class OpenstackMonitor():
 
 
 
-    def clean_read_alerts(self):
+    def clean_read_alerts(self, log):
         """
         Clean read alerts
+
+        :param log: (logging.Logger) The logger to use
         """
+        # Check
         enabled = self.config.get_bool("cleaner", "clean_read_alerts")
 
         if not(enabled):
-            self.log.info("clean_read_alerts option disabled by configuration")
+            log.info("clean_read_alerts option disabled by configuration")
             return
 
+        # Cleaner
         lifespan = self.config.get_int("cleaner", "read_alerts_lifespan")
         timestamp = datetime.datetime.now() - datetime.timedelta(days=lifespan)
 
-        self.log.debug("Deleting read alerts older than %d days..." % (lifespan,))
+        log.debug("Deleting read alerts older than %d days..." % (lifespan,))
         sql = 'DELETE FROM user_alerts WHERE status=0 AND timestamp<="%s";'
         self.db_cursor.execute(sql % (timestamp,))
         deleted = self.db_cursor.rowcount
-        self.log.info("%d alert(s) cleaned" % (deleted,))
         
         # Commit
-        self.log.debug("Commiting requests to database...")
+        log.debug("Commiting requests to database...")
         self.database.commit()
-        self.log.debug("Database requests successfully commited")
-
-        print(deleted)
+        log.debug("Database requests successfully commited")
+        log.info("%d alert(s) cleaned" % (deleted,))

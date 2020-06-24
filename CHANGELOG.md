@@ -8,6 +8,7 @@ New:
  - Alerts for max vCPUs per user in project
  - Alerts for max volumes per user in project
  - Alerts for max storage per user in project
+ - Auto-clean the oldest read alerts
 
 Fixes:
  - Fix the instance migration issue in gerenuk-libvirtmon service

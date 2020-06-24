@@ -95,7 +95,7 @@ if __name__ == "__main__":
 
         # Run task
         openstack_mon = gerenuk.monitoring.OpenstackMonitor(config)
-        openstack_mon.clean_read_alerts()
+        openstack_mon.clean_read_alerts(log)
 
     # Errors
     except gerenuk.ConfigError, e:
