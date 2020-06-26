@@ -17,7 +17,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Wed 24 Jun 15:02:35 CEST 2020
+# Fri 26 Jun 12:00:19 CEST 2020
 
 NOVA_API_VERSION = 2
 CINDER_API_VERSION = 3
@@ -206,6 +206,19 @@ class OpenstackMonitor():
 
             # Networks
             self.monitor_security_groups(project_config, unread_alerts, project_id, neutron)
+
+            # Cleaner
+            if project_config.get_bool("cleaner", "clean_read_alerts"):
+                lifespan = project_config.get_int("cleaner", "read_alerts_lifespan")
+                timestamp = datetime.datetime.now() - datetime.timedelta(days=lifespan)
+
+                self.log.debug("Deleting read alerts older than %d days..." % (lifespan,))
+                sql = 'DELETE FROM user_alerts WHERE project="%s" AND status=0 AND timestamp<="%s";'
+                self.db_cursor.execute(sql % (project_id, timestamp))
+                deleted = self.db_cursor.rowcount
+                self.log.info("%d alert(s) cleaned" % (deleted,))
+            else:
+                self.log.debug("clean_read_alerts option disabled by configuration")
 
             # Commit
             self.log.debug("Commiting requests to database...")
@@ -588,8 +601,8 @@ class OpenstackMonitor():
                         message = "Volume " + volume.id
                         if volume.name:
                             message += " (" + volume.name + ")"
-                            message += " created on " + created_at.strftime("%d/%m/%Y") + " (" + str(created_delta) + " day" + created_delta_s + " ago) inactive ("
-                            message += volume.status.upper() + ") since " + str(updated_delta) + " day" + updated_delta_s + '.'
+                        message += " created on " + created_at.strftime("%d/%m/%Y") + " (" + str(created_delta) + " day" + created_delta_s + " ago) inactive ("
+                        message += volume.status.upper() + ") since " + str(updated_delta) + " day" + updated_delta_s + '.'
 
                         # Update or keep unchanged existing alerts
                         if matching_alert:
@@ -946,24 +959,3 @@ class OpenstackMonitor():
 
         :param log: (logging.Logger) The logger to use
         """
-        # Check
-        enabled = self.config.get_bool("cleaner", "clean_read_alerts")
-
-        if not(enabled):
-            log.info("clean_read_alerts option disabled by configuration")
-            return
-
-        # Cleaner
-        lifespan = self.config.get_int("cleaner", "read_alerts_lifespan")
-        timestamp = datetime.datetime.now() - datetime.timedelta(days=lifespan)
-
-        log.debug("Deleting read alerts older than %d days..." % (lifespan,))
-        sql = 'DELETE FROM user_alerts WHERE status=0 AND timestamp<="%s";'
-        self.db_cursor.execute(sql % (timestamp,))
-        deleted = self.db_cursor.rowcount
-        
-        # Commit
-        log.debug("Commiting requests to database...")
-        self.database.commit()
-        log.debug("Database requests successfully commited")
-        log.info("%d alert(s) cleaned" % (deleted,))
