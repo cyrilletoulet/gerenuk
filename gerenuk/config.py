@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Tue 14 Jan 09:56:42 CET 2020
+# Fri 29 May 11:18:30 CEST 2020
 
 
 from . import BASE_PATH
@@ -95,3 +95,14 @@ class Config():
         :return: (list) The configuration item if exists
         """
         return ast.literal_eval(self.config.get(section, option))
+
+
+    def get_bool(self, section, option):
+        """
+        Get a boolean option value for the named section.
+
+        :param section: (str) The section to looking in
+        :param option: (str) The option to looking for
+        :return: (bool) The configuration item if exists
+        """
+        return self.config.getboolean(section, option)

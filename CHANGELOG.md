@@ -1,5 +1,19 @@
 # Gerenuk changelog
 
+## What's new in version 1.4.X?
+
+New:
+ - Add an option to allow ICMP rules in default security groups
+ - Alerts for max instances per user in project
+ - Alerts for max vCPUs per user in project
+ - Alerts for max volumes per user in project
+ - Alerts for max storage per user in project
+ - Auto-clean the oldest read alerts
+
+Fixes:
+ - Fix the instance migration issue in gerenuk-libvirtmon service
+
+
 ## What's new in version 1.3.X?
 
 Improvments:
