@@ -52,7 +52,7 @@ Create the config directory:
 ```bash
 mkdir /etc/gerenuk
 mkdir /etc/gerenuk/project.d
-chmod -R 700 /etc/gerenuk
+chmod -R 711 /etc/gerenuk
 ```
 
 
