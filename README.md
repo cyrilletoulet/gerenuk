@@ -28,10 +28,10 @@ Gerenuk is a cloud monitoring tools set.
 
 Please let us know if you find an error or a lack in the documentation.
 
- * [Installation](doc/install.md)
- * [Update](doc/update.md)
- * [Config reference](doc/config.md)
- * [Development guide](doc/develop.md)
+ * [Installation](documentation/install.md)
+ * [Update](documentation/update.md)
+ * [Config reference](documentation/config.md)
+ * [Development guide](documentation/develop.md)
 
 
 ## Known limitations and issues
