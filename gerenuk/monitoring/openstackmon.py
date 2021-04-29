@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 #
 # This file is part of Gerenuk.
 #
@@ -17,7 +17,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Fri 26 Jun 12:00:19 CEST 2020
+# Thu Apr 29 01:35:58 PM CEST 2021
 
 NOVA_API_VERSION = 2
 CINDER_API_VERSION = 3

@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 #
 #
 # This file is part of Gerenuk.
@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Thu 28 May 11:15:41 CEST 2020
+# Thu Apr 29 01:35:46 PM CEST 2021
 
 import multiprocessing
 import ConfigParser

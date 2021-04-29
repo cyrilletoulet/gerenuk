@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 #
 #
 # This file is part of Gerenuk.
@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Tue 15 Oct 10:45:56 CEST 2019
+# Thu Apr 29 01:22:16 PM CEST 2021
 
 
 class ConfigError(Exception):
