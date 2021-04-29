@@ -72,8 +72,9 @@ You can now populate the database:
 ./bin/gerenuk-db-wizard -c /etc/gerenuk/gerenuk.conf
 ```
 
-### Openstack configuration
-Gerenul needs to call OpenStack APIs, especially the Keystone and Nova ones.
+
+### Openstack configuration (mandatory)
+Gerenuk dashboard (openstack-gerenuk-ui) needs to call OpenStack APIs, especially the Keystone and Nova ones.
 
 First, create the **project_manager** role:
 ```bash
@@ -97,6 +98,7 @@ And restart the concerned APIs:
 ```bash
 systemctl restart openstack-nova-api.service httpd.service
 ```
+
 
 ### Gerenuk service
 Start by installing daemons:
@@ -128,6 +130,7 @@ On libvirt hypervisors, install the following additionnal packages:
 yum -y install libvirt-python
 ```
 
+
 ### Database configuration
 Next, configure database in **/etc/gerenuk/gerenuk.conf** (see config reference for details):
 ```
@@ -137,6 +140,7 @@ db_name = gerenuk
 db_user = gerenuk
 db_pass = *secret*
 ```
+
 
 ### Gerenuk service
 Start by installing daemons:

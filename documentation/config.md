@@ -16,6 +16,7 @@ For the main configuration reference, see [config/gerenuk.conf](config/gerenuk.c
 ## OpenStack project configuration reference
 
 To monitor an OpenStack project, create a specific configuration file in /etc/gerenuk/project.d.
+
 For more consistency, you can name your configuration files following the convention *domain.project.conf*.
 
 For the project specific configuration reference, see [config/project.d/project-sample.conf](config/project.d/project-sample.conf).
