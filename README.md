@@ -40,17 +40,18 @@ A cloud monitoring tools set
 
 On all servers, install the required python packages: 
 ```bash
-yum install python-pip mysql-connector-python
+yum install python3-pip
+pip3 install mysql-connector-python
 ```
 
 To install gerenuk lib from distribution tarball:
 ```bash
-pip install gerenuk-x.y.z.tar.gz
+pip3 install gerenuk-x.y.z.tar.gz
 ```
 
 To remove the installed gerenuk lib:
 ```bash
-pip uninstall gerenuk
+pip3 uninstall gerenuk
 ```
 
 Create the config directory:
@@ -152,7 +153,7 @@ systemctl stop gerenuk-*.service
 
 Upgrade gerenuk from new distribution:
 ```bash
-pip install dist/gerenuk-x.y.z.tar.gz
+pip3 install dist/gerenuk-x.y.z.tar.gz
 ```
 
 And finally restart your services from snapshot:
@@ -195,7 +196,7 @@ For the project specific configuration reference, see **doc/project.d/project-sa
 
 Instances monitoring API sample:
 ```python
-#!/usr/bin/python2
+#!/usr/bin/python3
 
 import sys
 import getopt
@@ -236,7 +237,7 @@ if __name__ == "__main__":
 
 Alerts API sample:
 ```python
-#!/usr/bin/python2
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 import sys
@@ -322,7 +323,7 @@ if __name__ == "__main__":
 ### Environment
 In order to configure a temporary development environment, you can manually specify gerenuk path: 
 ```bash
-export PYTHONPATH="/path/to/gerenuk/usr/lib/python2/dist-packages"
+export PYTHONPATH="/path/to/gerenuk/usr/lib/python3/dist-packages"
 export PATH="$PATH:/path/to/gerenuk/usr/bin"
 ```
 
