@@ -29,6 +29,11 @@ A cloud monitoring tools set
  * The alert for max vcpu per user in a project depends of the existence of base flavor
 
 
+## Releases
+
+ * OpenStack >= Ussuri: gerenuk v2 comming soon...
+ * OpenStack <= Train: gerenuk 1.4.0
+
 
 ## Installation
 ### Prerequisites
