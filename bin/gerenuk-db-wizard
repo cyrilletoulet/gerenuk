@@ -29,37 +29,37 @@ import gerenuk.monitoring
 
 
 def help():
-    print "Help"
-    print "===="
-    print
-    print "Usage: gerenuk-db-wizard [OPTION]..."
-    print "Run the gerenuk DB wizard to install or update database"
-    print
-    print "Mandatory arguments to long options are mandatory for short options too."
-    print "  -h, --help                   print this help"
-    print "  -c <file>, --config <file>   specify the configuration file"
-    print
-    print "Exit status:"
-    print " 0  if OK,"
-    print " 1  if minor problems (e.g., unknown option),"
-    print " 2  if serious trouble (e.g., backend error)."
-    print
-    print
-    print "License"
-    print "======="
-    print
-    print "Gerenuk is free software: you can redistribute it and/or modify"
-    print "it under the terms of the GNU General Public License as published by"
-    print "the Free Software Foundation, either version 3 of the License, or"
-    print "any later version."
-    print
-    print "Gerenuk is distributed in the hope that it will be useful,"
-    print "but WITHOUT ANY WARRANTY; without even the implied warranty of"
-    print "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the"
-    print "GNU General Public License for more details."
-    print
-    print "You should have received a copy of the GNU General Public License"
-    print "along with Gerenuk. If not, see <https://www.gnu.org/licenses/>."
+    print("Help")
+    print("====")
+    print()
+    print("Usage: gerenuk-db-wizard [OPTION]...")
+    print("Run the gerenuk DB wizard to install or update database")
+    print()
+    print("Mandatory arguments to long options are mandatory for short options too.")
+    print("  -h, --help                   print this help")
+    print("  -c <file>, --config <file>   specify the configuration file")
+    print()
+    print("Exit status:")
+    print(" 0  if OK,")
+    print(" 1  if minor problems (e.g., unknown option),")
+    print(" 2  if serious trouble (e.g., backend error).")
+    print()
+    print()
+    print("License")
+    print("=======")
+    print()
+    print("Gerenuk is free software: you can redistribute it and/or modify")
+    print("it under the terms of the GNU General Public License as published by")
+    print("the Free Software Foundation, either version 3 of the License, or")
+    print("any later version.")
+    print()
+    print("Gerenuk is distributed in the hope that it will be useful,")
+    print("but WITHOUT ANY WARRANTY; without even the implied warranty of")
+    print("MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the")
+    print("GNU General Public License for more details.")
+    print()
+    print("You should have received a copy of the GNU General Public License")
+    print("along with Gerenuk. If not, see <https://www.gnu.org/licenses/>.")
 
 
 
@@ -86,15 +86,15 @@ if __name__ == "__main__":
         db_cursor = database.cursor()
 
         # Confirmation
-        confirm = raw_input("Do you really want to run the Gerenuk database wizard? (type yes in uppercase) ")
+        confirm = input("Do you really want to run the Gerenuk database wizard? (type yes in uppercase) ")
         if not(confirm == "YES"):
-            print "Aborted."
+            print("Aborted.")
             sys.exit(1)
 
-        print
-        print "Running database wizard:"
+        print()
+        print("Running database wizard:")
 
-        print " - Sync instances_monitoring table..."
+        print(" - Sync instances_monitoring table...")
         sql =  "CREATE TABLE IF NOT EXISTS instances_monitoring ("
         sql += "  uuid VARCHAR(100) PRIMARY KEY,"
         sql += "  hypervisor VARCHAR(127) NOT NULL,"
@@ -114,7 +114,7 @@ if __name__ == "__main__":
         sql += ");"
         db_cursor.execute(sql)
 
-        print " - Sync user_alerts table..."
+        print(" - Sync user_alerts table...")
         sql =  "CREATE TABLE IF NOT EXISTS user_alerts ("
         sql += "  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,"
         sql += "  uuid VARCHAR(100),"
@@ -126,7 +126,7 @@ if __name__ == "__main__":
         sql += ");"
         db_cursor.execute(sql)
 
-        print " - v1.3.2 -> v1.3.3 migration..."
+        print(" - v1.3.2 -> v1.3.3 migration...")
         sql = "SELECT count(column_name) AS result FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = 'user_alerts' AND column_name = 'message_fr';"
         db_cursor.execute(sql)
         if db_cursor.fetchone()[0] == 1:
@@ -135,26 +135,26 @@ if __name__ == "__main__":
             sql = "ALTER TABLE user_alerts CHANGE message_en message VARCHAR(511) NOT NULL;"
             db_cursor.execute(sql)
         
-        print
-        print "Done!"
+        print()
+        print("Done!")
         
         
     # Errors
-    except gerenuk.ConfigError, e:
-        print >>sys.stderr, "Configuration error: %s" % str(e)
+    except gerenuk.ConfigError as e:
+        print("Configuration error: %s" % str(e), file=sys.stderr)
         sys.exit(1)
 
-    except gerenuk.DependencyError, e:
-        print >>sys.stderr, "Missing dependency: %s" % str(e)
+    except gerenuk.DependencyError as e:
+        print("Missing dependency: %s" % str(e), file=sys.stderr)
         sys.exit(1)
 
-    except mysql.connector.Error, e:
-        print >>sys.stderr, "Database error: %s" % str(e)
+    except mysql.connector.Error as e:
+        print("Database error: %s" % str(e), file=sys.stderr)
         sys.exit(1)
         
-    except Exception, e:
-        print >>sys.stderr, "Failure: %s" % str(e)
-        print >>sys.stderr, traceback.format_exc()
+    except Exception as e:
+        print("Failure: %s" % str(e), file=sys.stderr)
+        print(traceback.format_exc(), file=sys.stderr)
         sys.exit(1)
 
     finally:

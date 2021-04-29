@@ -23,7 +23,7 @@
 
 from . import BASE_PATH
 from .exceptions import ConfigError
-import ConfigParser
+import configparser
 import logging
 import ast
 import sys
@@ -39,7 +39,7 @@ class Config():
         """
         Initialize the Config object.
         """
-        self.config = ConfigParser.ConfigParser()
+        self.config = configparser.ConfigParser()
         self.load(BASE_PATH + "/defaults.conf")
 
         # Constants

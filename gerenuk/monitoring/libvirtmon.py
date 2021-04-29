@@ -21,7 +21,7 @@
 # Thu Apr 29 01:35:46 PM CEST 2021
 
 import multiprocessing
-import ConfigParser
+import configparser
 import platform
 import datetime
 import gerenuk
@@ -69,7 +69,7 @@ class LibvirtMonitor():
         try:
             import libvirt
             import mysql.connector
-        except Exception, e:
+        except Exception as e:
             raise gerenuk.DependencyError(e)
 
         self.log.debug("gerenuk.monitoring dependencies successfully loaded")
@@ -118,7 +118,7 @@ class LibvirtMonitor():
             self.log.debug("Loading existing stats...")
             self.load_stats()
             self.log.debug("Existing stats successfully loaded")
-        except mysql.connector.errors.OperationalError, e:
+        except mysql.connector.errors.OperationalError as e:
             self.log.warning("Connection with database lost, try to reconnect...")
             retries = 0
             succeed = False
@@ -175,7 +175,7 @@ class LibvirtMonitor():
         """
         try:
             import mysql.connector
-        except Exception, e:
+        except Exception as e:
             raise gerenuk.DependencyError(e)
 
         self.database = mysql.connector.connect(
@@ -195,7 +195,7 @@ class LibvirtMonitor():
         """
         try:
             import mysql.connector
-        except Exception, e:
+        except Exception as e:
             raise gerenuk.DependencyError(e)
 
         self.log.debug("Getting libvirt domain list")
@@ -247,7 +247,7 @@ class LibvirtMonitor():
             self.log.debug("Saving cached stats...")
             self.save_stats()
             self.log.debug("Cached stats successfully saved")
-        except mysql.connector.errors.OperationalError, e:
+        except mysql.connector.errors.OperationalError as e:
             self.log.warning("Unable to reach database, try to reconnect...")
             retries = 0
             succeed = False

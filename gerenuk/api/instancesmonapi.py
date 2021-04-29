@@ -20,7 +20,7 @@
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
 # Thu Apr 29 01:35:00 PM CEST 2021
 
-import ConfigParser
+import configparser
 import datetime
 import gerenuk
 
@@ -41,7 +41,7 @@ class InstancesMonitorAPI():
         # Dependencies
         try:
             import mysql.connector
-        except Exception, e:
+        except Exception as e:
             raise gerenuk.DependencyError(e)
 
         # Config
