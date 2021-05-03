@@ -125,10 +125,7 @@ The service logs are stored in **/var/log/gerenuk-openstackmon.log**.
 ## Install Gerenuk on Cloud hypervisors
 First of all, follow the previous common prerequisites.
 
-On libvirt hypervisors, install the following additionnal packages:
-```bash
-yum -y install libvirt-python
-```
+**python3-libvirt** is also needed on hypervisors but already installed by openstack.
 
 
 ### Database configuration
