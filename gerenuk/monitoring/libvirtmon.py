@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 #
 #
 # This file is part of Gerenuk.
@@ -18,10 +18,10 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Thu 28 May 11:15:41 CEST 2020
+# Mon May  3 09:02:09 AM CEST 2021
 
 import multiprocessing
-import ConfigParser
+import configparser
 import platform
 import datetime
 import gerenuk
@@ -69,14 +69,14 @@ class LibvirtMonitor():
         try:
             import libvirt
             import mysql.connector
-        except Exception, e:
+        except Exception as e:
             raise gerenuk.DependencyError(e)
 
         self.log.debug("gerenuk.monitoring dependencies successfully loaded")
 
         # Constants
         self.NB_VALUES = {
-            "hourly": 3600 / self.config.get_int("libvirt", "monitoring_frequency"),
+            "hourly": 3600 // self.config.get_int("libvirt", "monitoring_frequency"),
             "daily": 24,
             "weekly": 7
         }
@@ -118,7 +118,7 @@ class LibvirtMonitor():
             self.log.debug("Loading existing stats...")
             self.load_stats()
             self.log.debug("Existing stats successfully loaded")
-        except mysql.connector.errors.OperationalError, e:
+        except mysql.connector.errors.OperationalError as e:
             self.log.warning("Connection with database lost, try to reconnect...")
             retries = 0
             succeed = False
@@ -175,7 +175,7 @@ class LibvirtMonitor():
         """
         try:
             import mysql.connector
-        except Exception, e:
+        except Exception as e:
             raise gerenuk.DependencyError(e)
 
         self.database = mysql.connector.connect(
@@ -195,7 +195,7 @@ class LibvirtMonitor():
         """
         try:
             import mysql.connector
-        except Exception, e:
+        except Exception as e:
             raise gerenuk.DependencyError(e)
 
         self.log.debug("Getting libvirt domain list")
@@ -247,7 +247,7 @@ class LibvirtMonitor():
             self.log.debug("Saving cached stats...")
             self.save_stats()
             self.log.debug("Cached stats successfully saved")
-        except mysql.connector.errors.OperationalError, e:
+        except mysql.connector.errors.OperationalError as e:
             self.log.warning("Unable to reach database, try to reconnect...")
             retries = 0
             succeed = False

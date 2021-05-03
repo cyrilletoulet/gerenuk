@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 #
 #
 # This file is part of Gerenuk.
@@ -18,12 +18,12 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Fri 29 May 11:18:30 CEST 2020
+# Thu Apr 29 01:21:56 PM CEST 2021
 
 
 from . import BASE_PATH
 from .exceptions import ConfigError
-import ConfigParser
+import configparser
 import logging
 import ast
 import sys
@@ -39,7 +39,7 @@ class Config():
         """
         Initialize the Config object.
         """
-        self.config = ConfigParser.ConfigParser()
+        self.config = configparser.ConfigParser()
         self.load(BASE_PATH + "/defaults.conf")
 
         # Constants

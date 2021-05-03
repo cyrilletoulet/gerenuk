@@ -15,14 +15,14 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Fri 26 Jun 12:33:10 CEST 2020
+# Thu Apr 29 01:18:43 PM CEST 2021
 
 from setuptools import find_packages, setup
 
 
 setup(
     name = "gerenuk",
-    version = "1.4.0",
+    version = "2.0.0",
     description = "A cloud monitoring tools set",
     url = "https://github.com/cyrilletoulet/gerenuk",
 
@@ -30,8 +30,7 @@ setup(
     classifiers = [
         "License :: OSI Approved :: GPL v3 license",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
     ],
 
     keywords = "monitoring cloud openstack libvirt",
@@ -42,5 +41,5 @@ setup(
     package_data = {'': ["README", "*.conf"]},
     packages = find_packages(),
 
-    python_requires = '>=2.7,!=3.*',
+    python_requires = '>=3.6',
 )

@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 #
 #
 # This file is part of Gerenuk.
@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Mon  8 Apr 10:24:09 CEST 2019
+# Thu Apr 29 01:35:32 PM CEST 2021
 
 from .openstackmon import OpenstackMonitor
 from .libvirtmon import LibvirtMonitor
