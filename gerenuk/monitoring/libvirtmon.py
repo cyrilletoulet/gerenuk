@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Thu Apr 29 01:35:46 PM CEST 2021
+# Mon May  3 09:02:09 AM CEST 2021
 
 import multiprocessing
 import configparser
@@ -76,7 +76,7 @@ class LibvirtMonitor():
 
         # Constants
         self.NB_VALUES = {
-            "hourly": 3600 / self.config.get_int("libvirt", "monitoring_frequency"),
+            "hourly": 3600 // self.config.get_int("libvirt", "monitoring_frequency"),
             "daily": 24,
             "weekly": 7
         }
