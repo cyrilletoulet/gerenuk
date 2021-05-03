@@ -14,6 +14,8 @@
 
 
 ## Prerequisites
+### Minimal deployment
+
 On all servers, install the required python packages: 
 ```bash
 yum install python3-pip
@@ -38,17 +40,10 @@ touch /etc/gerenuk/gerenuk.conf
 chmod 600 /etc/gerenuk/gerenuk.conf
 ```
 
+### Database initialization
+Gerenuk also needs to store collected data in a MySQL-like database.
 
-
-
-
-## Install Gerenuk on Cloud controller
-First of all, follow the previous common prerequisites.
-
-### Database configuration
-Gerenuk needs to store collected data in a MySQL-like database.
-
-Create the required database:
+Create the required database on a service node, like cloud controller:
 ```bash
 mysql -u root -h $DB_HOST -p -e "CREATE DATABASE gerenuk;"
 mysql -u root -h $DB_HOST -p -e "CREATE USER 'gerenuk'@'%' IDENTIFIED BY '*secret*';"
@@ -72,6 +67,12 @@ You can now populate the database:
 ./bin/gerenuk-db-wizard -c /etc/gerenuk/gerenuk.conf
 ```
 
+
+
+
+
+## Install Gerenuk on Cloud controller
+First of all, follow the previous common prerequisites.
 
 ### Openstack configuration (mandatory)
 Gerenuk dashboard (openstack-gerenuk-ui) needs to call OpenStack APIs, especially the Keystone and Nova ones.
@@ -97,6 +98,17 @@ In **/etc/nova/policy.json**, configure the following rules:
 And restart the concerned APIs:
 ```bash
 systemctl restart openstack-nova-api.service httpd.service
+```
+
+
+### Database configuration
+Next, configure database in **/etc/gerenuk/gerenuk.conf** (see config reference for details):
+```
+[database]
+db_host = DB_HOST
+db_name = gerenuk
+db_user = gerenuk
+db_pass = *secret*
 ```
 
 
