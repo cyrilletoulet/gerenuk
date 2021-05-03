@@ -1,19 +1,5 @@
 # Gerenuk installation
 
-Table of content:
-1. Compatibility
-2. Prerequisites
-  2.1. Minimal deployment
-  2.2. Database initialization
-3. Install Gerenuk on Cloud controller
-  3.1. Database configuration
-  3.2. Gerenuk service
-  3.3. Openstack configuration (mandatory)
-4. Install Gerenuk on Cloud hypervisor
-  4.1. Database configuration
-  4.2. Gerenuk service
-
-
 ## 1. Compatibility
 
 | OpenStack release | Gerenuk release |
@@ -86,7 +72,7 @@ You can now populate the database:
 
 
 
-## 3. Install Gerenuk on Cloud controller
+## 3. Install Gerenuk on cloud controller
 First of all, follow the previous common prerequisites.
 
 ### 3.1. Database configuration
@@ -148,7 +134,7 @@ systemctl restart openstack-nova-api.service httpd.service
 
 
 
-## 4. Install Gerenuk on Cloud hypervisors
+## 4. Install Gerenuk on cloud hypervisors
 First of all, follow the previous common prerequisites.
 
 **python3-libvirt** is also needed on hypervisors but already installed by openstack.
