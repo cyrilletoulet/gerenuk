@@ -1,5 +1,12 @@
 # Gerenuk changelog
 
+## What's new in version 2.0.X?
+
+New:
+ - Code migration to python 3 (end of python2 support)
+ - Add support of OpenStack Ussuri release
+
+
 ## What's new in version 1.4.X?
 
 New:
@@ -18,7 +25,7 @@ Fixes:
 
 Improvments:
  - Detect and update existing unread alerts to avoid to spam users
- 
+
 Fixes:
  - TCP whitelist used in specific case instead of UDP whitelist
 
@@ -31,7 +38,7 @@ New:
 Improvments:
  - Retry mechanisms
  - Quality of code
- 
+
 Fixes:
  - Security groups alerts perimeter
 

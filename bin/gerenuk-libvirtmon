@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 #
 #
 # This file is part of Gerenuk.
@@ -18,7 +18,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Thu 28 May 16:48:21 CEST 2020
+# Thu Apr 29 01:37:03 PM CEST 2021
 
 import os
 import sys
@@ -31,37 +31,37 @@ import gerenuk.monitoring
 
 
 def help():
-    print "Help"
-    print "===="
-    print
-    print "Usage: gerenuk-libvirtmon [OPTION]..."
-    print "Run the gerenuk libvirt monitor"
-    print
-    print "Mandatory arguments to long options are mandatory for short options too."
-    print "  -h, --help                   print this help"
-    print "  -c <file>, --config <file>   specify the configuration file"
-    print
-    print "Exit status:"
-    print " 0  if OK,"
-    print " 1  if minor problems (e.g., unknown option),"
-    print " 2  if serious trouble (e.g., backend error)."
-    print
-    print
-    print "License"
-    print "======="
-    print
-    print "Gerenuk is free software: you can redistribute it and/or modify"
-    print "it under the terms of the GNU General Public License as published by"
-    print "the Free Software Foundation, either version 3 of the License, or"
-    print "any later version."
-    print
-    print "Gerenuk is distributed in the hope that it will be useful,"
-    print "but WITHOUT ANY WARRANTY; without even the implied warranty of"
-    print "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the"
-    print "GNU General Public License for more details."
-    print
-    print "You should have received a copy of the GNU General Public License"
-    print "along with Gerenuk. If not, see <https://www.gnu.org/licenses/>."
+    print("Help")
+    print("====")
+    print()
+    print("Usage: gerenuk-libvirtmon [OPTION]...")
+    print("Run the gerenuk libvirt monitor")
+    print()
+    print("Mandatory arguments to long options are mandatory for short options too.")
+    print("  -h, --help                   print this help")
+    print("  -c <file>, --config <file>   specify the configuration file")
+    print()
+    print("Exit status:")
+    print(" 0  if OK,")
+    print(" 1  if minor problems (e.g., unknown option),")
+    print(" 2  if serious trouble (e.g., backend error).")
+    print()
+    print()
+    print("License")
+    print("=======")
+    print()
+    print("Gerenuk is free software: you can redistribute it and/or modify")
+    print("it under the terms of the GNU General Public License as published by")
+    print("the Free Software Foundation, either version 3 of the License, or")
+    print("any later version.")
+    print()
+    print("Gerenuk is distributed in the hope that it will be useful,")
+    print("but WITHOUT ANY WARRANTY; without even the implied warranty of")
+    print("MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the")
+    print("GNU General Public License for more details.")
+    print()
+    print("You should have received a copy of the GNU General Public License")
+    print("along with Gerenuk. If not, see <https://www.gnu.org/licenses/>.")
 
 
 
@@ -128,28 +128,28 @@ if __name__ == "__main__":
             time.sleep(wait)
 
     # Errors
-    except IOError, e:
+    except IOError as e:
         log.error("Unable to open PID file: %s" % str(e))
         sys.exit(1)
 
-    except OSError, e:
+    except OSError as e:
         log.error("Daemonization failed: %s" % str(e))
         sys.exit(1)
 
-    except gerenuk.ConfigError, e:
+    except gerenuk.ConfigError as e:
         log.error("Configuration error: %s" % str(e))
         sys.exit(1)
 
-    except gerenuk.DependencyError, e:
+    except gerenuk.DependencyError as e:
         log.error("Missing dependency: %s" % str(e))
         sys.exit(1)
 
-    except gerenuk.MonitoringError, e:
+    except gerenuk.MonitoringError as e:
         log.error("Monitoring error: %s" % str(e))
         log.error(traceback.format_exc())
         sys.exit(1)
 
-    except Exception, e:
+    except Exception as e:
         log.critical("Service failure: %s" % str(e))
         log.critical(traceback.format_exc())
         sys.exit(1)

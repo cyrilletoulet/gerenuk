@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 #
 # This file is part of Gerenuk.
 #
@@ -17,7 +17,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Fri 26 Jun 12:00:19 CEST 2020
+# Thu Apr 29 01:35:58 PM CEST 2021
 
 NOVA_API_VERSION = 2
 CINDER_API_VERSION = 3
@@ -72,7 +72,7 @@ class OpenstackMonitor():
         # Dependencies
         try:
             import mysql.connector
-        except Exception, e:
+        except Exception as e:
             raise gerenuk.DependencyError(e)
 
         self.log.debug("gerenuk.monitoring dependencies successfully loaded")
@@ -113,7 +113,7 @@ class OpenstackMonitor():
         # Dependencies
         try:
             import mysql.connector
-        except Exception, e:
+        except Exception as e:
             raise gerenuk.DependencyError(e)
 
         self.database = mysql.connector.connect(
@@ -166,7 +166,7 @@ class OpenstackMonitor():
             import novaclient.client as nova_client
             import cinderclient.client as cinder_client
             import neutronclient.v2_0.client as neutron_client
-        except Exception, e:
+        except Exception as e:
             raise gerenuk.DependencyError(e)
 
         credentials = dict()
@@ -225,7 +225,7 @@ class OpenstackMonitor():
             self.database.commit()
             self.log.debug("Database requests successfully commited")
 
-        except Exception, e:
+        except Exception as e:
             raise gerenuk.MonitoringError(e)
 
 

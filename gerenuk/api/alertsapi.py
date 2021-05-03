@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 #
 #
 # This file is part of Gerenuk.
@@ -18,9 +18,9 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Tue 14 Jan 12:53:30 CET 2020
+# Thu Apr 29 01:22:51 PM CEST 2021
 
-import ConfigParser
+import configparser
 import datetime
 import gerenuk
 
@@ -41,7 +41,7 @@ class AlertsAPI():
         # Dependencies
         try:
             import mysql.connector
-        except Exception, e:
+        except Exception as e:
             raise gerenuk.DependencyError(e)
 
         # Config
