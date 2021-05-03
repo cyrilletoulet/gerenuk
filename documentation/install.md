@@ -1,5 +1,20 @@
 # Gerenuk installation
-## Compatibility
+
+Table of content:
+1. Compatibility
+2. Prerequisites
+  2.1. Minimal deployment
+  2.2. Database initialization
+3. Install Gerenuk on Cloud controller
+  3.1. Database configuration
+  3.2. Gerenuk service
+  3.3. Openstack configuration (mandatory)
+4. Install Gerenuk on Cloud hypervisor
+  4.1. Database configuration
+  4.2. Gerenuk service
+
+
+## 1. Compatibility
 
 | OpenStack release | Gerenuk release |
 | --- | --- |
@@ -13,8 +28,8 @@
 
 
 
-## Prerequisites
-### Minimal deployment
+## 2. Prerequisites
+### 2.1. Minimal deployment
 
 On all servers, install the required python packages: 
 ```bash
@@ -40,7 +55,7 @@ touch /etc/gerenuk/gerenuk.conf
 chmod 600 /etc/gerenuk/gerenuk.conf
 ```
 
-### Database initialization
+### 2.2. Database initialization
 Gerenuk also needs to store collected data in a MySQL-like database.
 
 Create the required database on a service node, like cloud controller:
@@ -63,7 +78,7 @@ db_pass = *secret*
 ```
 
 You can now populate the database:
-```basg
+```bash
 ./bin/gerenuk-db-wizard -c /etc/gerenuk/gerenuk.conf
 ```
 
@@ -71,10 +86,38 @@ You can now populate the database:
 
 
 
-## Install Gerenuk on Cloud controller
+## 3. Install Gerenuk on Cloud controller
 First of all, follow the previous common prerequisites.
 
-### Openstack configuration (mandatory)
+### 3.1. Database configuration
+Next, configure database in **/etc/gerenuk/gerenuk.conf** (see config reference for details):
+```
+[database]
+db_host = DB_HOST
+db_name = gerenuk
+db_user = gerenuk
+db_pass = *secret*
+```
+
+
+### 3.2. Gerenuk service
+Start by installing daemons:
+```bash
+cp bin/gerenuk-openstackmon /usr/bin/
+cp systemd/gerenuk-openstackmon.service /usr/lib/systemd/system/
+systemctl daemon-reload
+```
+
+And finally, start the **gerenuk-openstackmon** service:
+```bash
+systemctl start gerenuk-openstackmon.service
+systemctl enable gerenuk-openstackmon.service
+```
+
+The service logs are stored in **/var/log/gerenuk-openstackmon.log**.
+
+
+### 3.3. Openstack configuration (mandatory)
 Gerenuk dashboard (openstack-gerenuk-ui) needs to call OpenStack APIs, especially the Keystone and Nova ones.
 
 First, create the **project_manager** role:
@@ -101,46 +144,17 @@ systemctl restart openstack-nova-api.service httpd.service
 ```
 
 
-### Database configuration
-Next, configure database in **/etc/gerenuk/gerenuk.conf** (see config reference for details):
-```
-[database]
-db_host = DB_HOST
-db_name = gerenuk
-db_user = gerenuk
-db_pass = *secret*
-```
-
-
-### Gerenuk service
-Start by installing daemons:
-```bash
-cp bin/gerenuk-openstackmon /usr/bin/
-cp systemd/gerenuk-openstackmon.service /usr/lib/systemd/system/
-systemctl daemon-reload
-```
-
-And finally, start the **gerenuk-openstackmon** service:
-```bash
-systemctl start gerenuk-openstackmon.service
-systemctl enable gerenuk-openstackmon.service
-```
-
-The service logs are stored in **/var/log/gerenuk-openstackmon.log**.
 
 
 
 
-
-
-
-## Install Gerenuk on Cloud hypervisors
+## 4. Install Gerenuk on Cloud hypervisors
 First of all, follow the previous common prerequisites.
 
 **python3-libvirt** is also needed on hypervisors but already installed by openstack.
 
 
-### Database configuration
+### 4.1. Database configuration
 Next, configure database in **/etc/gerenuk/gerenuk.conf** (see config reference for details):
 ```
 [database]
@@ -151,7 +165,7 @@ db_pass = *secret*
 ```
 
 
-### Gerenuk service
+### 4.2. Gerenuk service
 Start by installing daemons:
 ```bash
 cp bin/gerenuk-libvirtmon /usr/bin/
