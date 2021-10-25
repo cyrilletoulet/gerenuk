@@ -20,27 +20,28 @@ if __name__ == "__main__":
                 config.load(value)
 
         api = gerenuk.api.InstancesMonitorAPI(config)
-	uuids = ["64989afb-73c6-4bfe-8c0f-359c5ac55914", "d0a3ea06-92d9-422b-aaf6-f8784bf57c5d"]
+        uuids = ["69243c24-d544-43c2-a7db-2608e862522a"]
         results = api.get_instances_monitoring(uuids)
 
-	for uuid in results:
-	    print uuid + ": " + str(results[uuid])
+        for uuid in results:
+            print(uuid + ": " + str(results[uuid]))
 
-    except gerenuk.ConfigError, e:
-        print >>sys.stderr, "Configuration error: %s" % str(e)
+    except gerenuk.ConfigError as e:
+        print("Configuration error: %s" % str(e), file=sys.stderr)
         sys.exit(1)
 
-    except gerenuk.DependencyError, e:
-        print >>sys.stderr, "Missing dependency: %s" % str(e)
+    except gerenuk.DependencyError as e:
+        print("Missing dependency: %s" % str(e), file=sys.stderr)
         sys.exit(1)
-
-    except Exception, e:
-        print >>sys.stderr, "Service failure: %s" % str(e)
+        
+    except Exception as e:
+        print("Service failure: %s" % str(e), file=sys.stderr)
         sys.exit(1)
 
     finally:
         sys.exit(0)
 ```
+
 
 Alerts API sample:
 ```python
@@ -67,7 +68,7 @@ if __name__ == "__main__":
         api = gerenuk.api.AlertsAPI(config)
 
         # Get read alerts
-        project = "75a5d7351c6c4a40ad9fc3ab0a50f4d0"
+        project = "8452fbf257b64ea7beecf4a1ce0de6c1"
         read_alerts = api.get_read_alerts(project)
         
         for alert in read_alerts:
@@ -75,12 +76,12 @@ if __name__ == "__main__":
             if not(alert["uuid"]):
                 dest = "all members of project"
             
-            print "Alert #" + str(alert["id"]) + " in project " + project
-            print " - Severity: " + SEVERITY[alert["severity"]]
-            print " - User: " + dest
-            print " - Timestamp: " + str(alert["timestamp"])
-            print " - Message: " + alert["message"]
-            print
+            print("Alert #" + str(alert["id"]) + " in project " + project)
+            print(" - Severity: " + SEVERITY[alert["severity"]])
+            print(" - User: " + dest)
+            print(" - Timestamp: " + str(alert["timestamp"]))
+            print(" - Message: " + alert["message"])
+            print()
 
         # Get unread alerts
         unread_alerts = api.get_unread_alerts(project)
@@ -90,9 +91,9 @@ if __name__ == "__main__":
             read_ids.append(unread_alerts[i]["id"])
 
         # Tags the two first alerts as read
-        print "Alerts to tag as read: " + ", ".join([str(id) for id in read_ids])
+        print("Alerts to tag as read: " + ", ".join([str(id) for id in read_ids]))
         api.tag_alerts_as_read(read_ids)
-        print
+        print()
 
         # Get read alerts once again
         read_alerts = api.get_read_alerts(project)
@@ -102,23 +103,23 @@ if __name__ == "__main__":
             if not(alert["uuid"]):
                 dest = "all members of project"
             
-            print "Alert #" + str(alert["id"]) + " in project " + project
-            print " - Severity: " + SEVERITY[alert["severity"]]
-            print " - User: " + dest
-            print " - Timestamp: " + str(alert["timestamp"])
-            print " - Message: " + alert["message"]
-            print
+            print("Alert #" + str(alert["id"]) + " in project " + project)
+            print(" - Severity: " + SEVERITY[alert["severity"]])
+            print(" - User: " + dest)
+            print(" - Timestamp: " + str(alert["timestamp"]))
+            print(" - Message: " + alert["message"])
+            print()
 
-    except gerenuk.ConfigError, e:
-        print >>sys.stderr, "Configuration error: %s" % str(e)
+    except gerenuk.ConfigError as e:
+        print("Configuration error: %s" % str(e), file=sys.stderr)
         sys.exit(1)
 
-    except gerenuk.DependencyError, e:
-        print >>sys.stderr, "Missing dependency: %s" % str(e)
+    except gerenuk.DependencyError as e:
+        print("Missing dependency: %s" % str(e), file=sys.stderr)
         sys.exit(1)
-
-    except Exception, e:
-        print >>sys.stderr, "Service failure: %s" % str(e)
+        
+    except Exception as e:
+        print("Service failure: %s" % str(e), file=sys.stderr)
         sys.exit(1)
 
     finally:
