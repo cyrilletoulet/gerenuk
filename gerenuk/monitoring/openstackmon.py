@@ -17,7 +17,7 @@
 #
 #
 # Cyrille TOULET <cyrille.toulet@univ-lille.fr>
-# Thu Apr 29 01:35:58 PM CEST 2021
+# Mon Oct 25 12:53:01 PM CEST 2021
 
 NOVA_API_VERSION = 2
 CINDER_API_VERSION = 3
@@ -918,6 +918,7 @@ class OpenstackMonitor():
                     self.log.debug("Found unknown opened rule in security group %s" % sg['name'])
 
                     # Look for matching unread alert
+                    matching_alert = None
                     regex = re.compile("^[0-9]+ port[s]? in range %s:%s \(%s\) open to %s in security group .* \(%s\) since [0-9]+ day[s]?\.$" % (
                         str(rule['port_range_min']), str(rule['port_range_max']), rule["protocol"], rule["remote_ip_prefix"], sg['id'])
                     )
